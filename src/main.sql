@@ -1,0 +1,6 @@
+#include "tables.hsql"
+#include "columns.hsql"
+#include "values.hsql"
+#include "changes.hsql"
+#include "actions.hsql"
+#include "categories.hsql"

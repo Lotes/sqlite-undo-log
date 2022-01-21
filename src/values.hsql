@@ -1,0 +1,19 @@
+#ifndef VALUES
+#define VALUES
+#include "shared.hsql"
+#include "columns.hsql"
+#include "changes.hsql"
+CREATE TABLE __TABLE_PREFIX(values) (
+  id INT NOT NULL PRIMARY KEY,
+  column_id INT NOT NULL,
+  change_id INT NOT NULL,
+  old_value TEXT NULL,
+  new_value TEXT NULL,
+  FOREIGN KEY (column_id)
+    REFERENCES __TABLE_PREFIX(columns)(id)
+    ON DELETE CASCADE,
+  FOREIGN KEY (change_id)
+    REFERENCES __TABLE_PREFIX(changes)(id)
+    ON DELETE CASCADE
+);
+#endif

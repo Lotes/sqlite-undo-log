@@ -1,0 +1,14 @@
+#ifndef COLUMNS
+#define COLUMNS
+#include "shared.hsql"
+#include "tables.hsql"
+CREATE TABLE __TABLE_PREFIX(columns) (
+  id INT PRIMARY KEY,
+  name TEXT NOT NULL,
+  table_id INT  NOT NULL,
+  UNIQUE (table_id, name),
+  FOREIGN KEY(table_id)
+    REFERENCES __TABLE_PREFIX(tables)(id)
+    ON DELETE CASCADE
+);
+#endif

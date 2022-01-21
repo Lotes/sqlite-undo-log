@@ -1,0 +1,8 @@
+#ifndef CATEGORIES
+#define CATEGORIES
+#include "shared.hsql"
+CREATE TABLE __TABLE_PREFIX(categories) (
+  id INT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE
+);
+#endif
