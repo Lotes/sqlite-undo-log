@@ -1,0 +1,37 @@
+#ifndef SETUP_H
+#define SETUP_H
+#include "shared.hsql"
+
+#define __GET_CATEGORY_ID(category_name)\
+SELECT id FROM __TABLE_PREFIX(categories) WHERE name=#category_name
+
+#define __GET_TABLE_ID(table)\
+SELECT id FROM __TABLE_PREFIX(tables) WHERE name=#table
+
+#define __GET_COLUMN_ID(table, column)\
+SELECT id FROM __TABLE_PREFIX(columns) WHERE name=#column AND table_id=(__GET_TABLE_ID(table))
+
+#define __SETUP_UNDO_LOG(table)\
+INSERT INTO __TABLE_PREFIX(tables) (name) VALUES (#table);__NL\
+INSERT INTO __TABLE_PREFIX(columns) (name, table_id)__NL\
+SELECT name, (__GET_TABLE_ID(table)) FROM pragma_table_info(#table);__NL\
+CREATE TRIGGER table##_on_insert_trigger __NL\
+  AFTER INSERT ON table __NL\
+  FOR EACH ROW __NL\
+BEGIN __NL\
+  SELECT 1;__NL\
+END
+
+#define NOW strftime('%Y-%m-%d %H-%M-%S','now')
+
+#define __BEGIN_ACTION(category_name)\
+--beginning an action #category_name __NL\
+BEGIN TRANSACTION;__NL\
+INSERT OR IGNORE INTO __TABLE_PREFIX(categories) (name) VALUES (#category_name);__NL\
+INSERT INTO __TABLE_PREFIX(actions) (category_id, created_at) SELECT (__GET_CATEGORY_ID(category_name)), NOW;__NL\
+INSERT INTO __TABLE_PREFIX(controls) (name, value) VALUES (__CURRENT_ACTION, last_insert_rowid()), (__CURRENT_CHANGE_ID, 0);
+
+#define __END_ACTION COMMIT TRANSACTION;__NL\
+--end of action #category_name
+
+#endif

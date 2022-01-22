@@ -1,4 +1,4 @@
-#ifndef SHARED
-#define SHARED
+#ifndef SHARED_H
+#define SHARED_H
 #define __TABLE_PREFIX(name) undo_##name
 #endif

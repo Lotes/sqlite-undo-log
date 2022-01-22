@@ -1,11 +1,11 @@
-#ifndef COLUMNS
-#define COLUMNS
+#ifndef COLUMNS_H
+#define COLUMNS_H
 #include "shared.hsql"
 #include "tables.hsql"
 CREATE TABLE __TABLE_PREFIX(columns) (
-  id INT PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
-  table_id INT  NOT NULL,
+  table_id INTEGER  NOT NULL,
   UNIQUE (table_id, name),
   FOREIGN KEY(table_id)
     REFERENCES __TABLE_PREFIX(tables)(id)
