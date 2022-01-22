@@ -6,7 +6,7 @@ CREATE TABLE __TABLE_PREFIX(actions) (
   id INT NOT NULL PRIMARY KEY,
   created_at DATETIME NOT NULL,
   category_id INT NULL,
-  type TEXT CHECK(type IN ('INSERT','DELETE','CREATE')),
+  type TEXT CHECK(type IN ('INSERT','DELETE','UPDATE')),
   FOREIGN KEY (category_id)
     REFERENCES __TABLE_PREFIX(categories)(id)
     ON DELETE SET NULL
