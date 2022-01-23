@@ -1,0 +1,35 @@
+{
+  "name": "node-sqlite-undo-log",
+  "version": "1.0.0",
+  "description": "An undo log for SQLite3 driven by Javascript",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "sqlpp": "sh ./compile-sqlpp.sh",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lotes/sqlite-undo-log.git"
+  },
+  "keywords": [
+    "undo",
+    "log",
+    "sqlite3",
+    "sqlite",
+    "typescript",
+    "javascript"
+  ],
+  "author": "Markus Rudolph",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Lotes/sqlite-undo-log/issues"
+  },
+  "homepage": "https://github.com/Lotes/sqlite-undo-log#readme",
+  "dependencies": {
+    "@types/sqlite3": "^3.1.8",
+    "sqlite3": "^5.0.2"
+  }
+}
