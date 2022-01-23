@@ -3,11 +3,11 @@
 #include "shared.hsql"
 #include "actions.hsql"
 
-#define __CURRENT_ACTION "current_action_id"
+#define __CURRENT_ACTION_ID "current_action_id"
 #define __CURRENT_CHANGE_ID "current_change_id"
 
 CREATE TABLE __TABLE_PREFIX(controls) (
   name TEXT NOT NULL PRIMARY KEY,
-  value TEXT NULL
+  value INTEGER NULL
 );
 #endif
