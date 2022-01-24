@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "es2016",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "allowUnreachableCode": false,
+    "skipLibCheck": true,
+    "rootDir": "./src/ts/",
+    "typeRoots": ["@types"]
+  },
+  "include": ["src/ts/**/*.ts"],
+}

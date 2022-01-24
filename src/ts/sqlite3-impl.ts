@@ -57,7 +57,7 @@ export class DatabaseImpl implements Database {
     return new Promise((resolve, reject) => {
       const db = new sqlite.Database(this.fileName, (err) => {
         if(err == null) {
-          const connection = new ConnectionImpl(db);
+          const connection: Connection = new ConnectionImpl(db);
           return resolve(connection);
         }
         return reject(err);

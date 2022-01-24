@@ -7,7 +7,10 @@
     "doc": "docs"
   },
   "scripts": {
-    "sqlpp": "sh ./compile-sqlpp.sh",
+    "build-sql": "sh ./compile-sqlpp.sh",
+    "build": "webpack",
+    "start": "yarn run webpack && yarn run build",
+    "watch": "webpack -w",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -29,7 +32,14 @@
   },
   "homepage": "https://github.com/Lotes/sqlite-undo-log#readme",
   "dependencies": {
-    "@types/sqlite3": "^3.1.8",
     "sqlite3": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/sqlite3": "^3.1.8",
+    "ts-loader": "^9.2.6",
+    "typescript": "^4.5.5",
+    "webpack": "^5.67.0",
+    "webpack-cli": "^4.9.2",
+    "webpack-node-externals": "^3.0.0"
   }
 }
