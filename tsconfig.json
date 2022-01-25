@@ -7,9 +7,9 @@
     "strict": true,
     "allowUnreachableCode": false,
     "skipLibCheck": true,
-    "rootDir": ".",
-    "typeRoots": ["@types"],
-    "types": ["raw-loader.d.ts", "node"]
+    "rootDir": "./",
+    "typeRoots": ["./src/types", "./node_modules/@types"],
+    "types": ["raw-loader", "node"]
   },
   "include": ["**/*.ts"],
 }

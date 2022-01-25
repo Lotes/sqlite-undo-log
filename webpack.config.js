@@ -22,7 +22,7 @@ module.exports = {
     module: {
         rules: [{
             test: /\.csql$/i,
-            use: "raw-loader"
+            use: "./src/ts/sql-loader"
         }, {
             test: /\.tsx?$/,
             loader: "ts-loader"
