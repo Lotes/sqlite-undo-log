@@ -7,11 +7,11 @@
     "doc": "docs"
   },
   "scripts": {
-    "build-sql": "sh ./compile-sqlpp.sh",
+    "build-sql": "sh ./src/csql/compile.sh ./src/csql/install.csql > ./src/sql/install.sql",
+    "test-sql": "sqlite3 < ./src/sql/install.sql",
     "build": "webpack",
     "start": "yarn run build && node ./bin/index.js",
-    "watch": "webpack -w",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "watch": "webpack -w"
   },
   "repository": {
     "type": "git",
