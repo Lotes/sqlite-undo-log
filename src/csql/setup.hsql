@@ -1,6 +1,6 @@
 #ifndef SETUP_H
 #define SETUP_H
-#include "shared.hsql"
+#include "tables/shared.hsql"
 
 #define __GET_CURRENT_ACTION_ID SELECT value FROM __TABLE_PREFIX(controls) WHERE name = __CURRENT_ACTION_ID LIMIT 1
 

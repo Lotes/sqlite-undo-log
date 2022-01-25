@@ -17,12 +17,12 @@ module.exports = {
         filename: "[name].js"
     },
     resolve: {
-        extensions: [".ts", ".tsx", ".js", ".csql"],
+        extensions: [".ts", ".tsx", ".js", ".sql"],
     },
     module: {
         rules: [{
-            test: /\.csql$/i,
-            use: "./src/ts/sql-loader"
+            test: /\.sql$/i,
+            use: "raw-loader"
         }, {
             test: /\.tsx?$/,
             loader: "ts-loader"

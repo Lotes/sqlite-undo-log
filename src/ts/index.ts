@@ -1,5 +1,5 @@
 import { Connection } from "./types";
-import a from "!!raw-loader!../sqlpp/install.csql";
+import installScript from "!!raw-loader!../sql/install.sql";
 
 export function setup(connection: Connection) {
 
