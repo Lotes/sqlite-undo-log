@@ -7,8 +7,9 @@
     "strict": true,
     "allowUnreachableCode": false,
     "skipLibCheck": true,
-    "rootDir": "./src/ts/",
-    "typeRoots": ["@types"]
+    "rootDir": ".",
+    "typeRoots": ["@types"],
+    "types": ["raw-loader.d.ts", "node"]
   },
-  "include": ["src/ts/**/*.ts"],
+  "include": ["**/*.ts"],
 }
