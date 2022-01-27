@@ -1,0 +1,18 @@
+#ifndef HOOKS_SHARED_H
+#define HOOKS_SHARED_H
+#include "../tables/shared.hsql"
+
+#define __GET_CURRENT_ACTION_ID SELECT value FROM __TABLE_PREFIX(controls) WHERE name = __CURRENT_ACTION_ID LIMIT 1
+
+#define __GET_CURRENT_CHANGE_ID SELECT value FROM __TABLE_PREFIX(controls) WHERE name = __CURRENT_CHANGE_ID LIMIT 1
+
+#define __GET_CATEGORY_ID(category_name) SELECT id FROM __TABLE_PREFIX(categories) WHERE name = #category_name LIMIT 1
+
+#define __GET_TABLE_ID(table) SELECT id FROM __TABLE_PREFIX(tables) WHERE name=#table LIMIT 1
+
+#define __GET_COLUMN_ID(table, column) SELECT id FROM __TABLE_PREFIX(columns) WHERE name=#column AND table_id = (__GET_TABLE_ID(table)) LIMIT 1
+
+#define __INCREMENT_CHANGE_ID UPDATE __TABLE_PREFIX(controls) SET value=value+1 WHERE name=__CURRENT_CHANGE_ID;
+
+#define __NOW strftime('%Y-%m-%d %H-%M-%S', 'now')
+#endif

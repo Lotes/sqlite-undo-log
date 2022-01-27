@@ -8,8 +8,8 @@ export interface RunResult {
 export interface Connection {
   execute(query: string): Promise<void>; 
   run(query: string, parameters?: Parameters): Promise<RunResult>; 
-  getSingle(query: string, parameters?: Parameters): Promise<Row|null>; 
-  getAll(query: string, parameters?: Parameters): Promise<Row[]>; 
+  getSingle<T=Row>(query: string, parameters?: Parameters): Promise<T|null>; 
+  getAll<T=Row>(query: string, parameters?: Parameters): Promise<T[]>; 
 }
 
 export interface Database {

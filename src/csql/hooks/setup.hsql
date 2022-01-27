@@ -1,18 +1,6 @@
 #ifndef SETUP_H
 #define SETUP_H
-#include "tables/shared.hsql"
-
-#define __GET_CURRENT_ACTION_ID SELECT value FROM __TABLE_PREFIX(controls) WHERE name = __CURRENT_ACTION_ID LIMIT 1
-
-#define __GET_CURRENT_CHANGE_ID SELECT value FROM __TABLE_PREFIX(controls) WHERE name = __CURRENT_CHANGE_ID LIMIT 1
-
-#define __GET_CATEGORY_ID(category_name) SELECT id FROM __TABLE_PREFIX(categories) WHERE name = #category_name LIMIT 1
-
-#define __GET_TABLE_ID(table) SELECT id FROM __TABLE_PREFIX(tables) WHERE name=#table LIMIT 1
-
-#define __GET_COLUMN_ID(table, column) SELECT id FROM __TABLE_PREFIX(columns) WHERE name=#column AND table_id = (__GET_TABLE_ID(table)) LIMIT 1
-
-#define __INCREMENT_CHANGE_ID UPDATE __TABLE_PREFIX(controls) SET value=value+1 WHERE name=__CURRENT_CHANGE_ID;
+#include "shared.hsql"
 
 #define __SETUP_UNDO_LOG(table)\
 INSERT INTO __TABLE_PREFIX(tables) (name) VALUES (#table);__NL\
@@ -26,7 +14,6 @@ BEGIN __NL\
   __INCREMENT_CHANGE_ID;__NL\
 END
 
-#define NOW strftime('%Y-%m-%d %H-%M-%S','now')
 
 #define __BEGIN_ACTION(category_name)\
 --beginning of an action #category_name __NL\

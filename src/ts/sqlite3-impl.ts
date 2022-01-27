@@ -26,8 +26,8 @@ export class ConnectionImpl implements Connection {
       })
     });
   }
-  getSingle(query: string, parameters?: Parameters): Promise<Row|null> {
-    return new Promise<Row|null>((resolve, reject)=>{
+  getSingle<T=Row>(query: string, parameters?: Parameters): Promise<T|null> {
+    return new Promise<T|null>((resolve, reject)=>{
       this.db.get(query, parameters, function(err, row) {
         if(err == null) {
           return resolve(row || null);
@@ -36,8 +36,8 @@ export class ConnectionImpl implements Connection {
       })
     });
   }
-  getAll(query: string, parameters?: Parameters): Promise<Row[]> {
-    return new Promise<Row[]>((resolve, reject)=>{
+  getAll<T=Row>(query: string, parameters?: Parameters): Promise<T[]> {
+    return new Promise<T[]>((resolve, reject)=>{
       this.db.get(query, parameters, function(err, rows) {
         if(err == null) {
           return resolve(rows || []);
@@ -51,7 +51,7 @@ export class ConnectionImpl implements Connection {
 export class DatabaseImpl implements Database {
   private fileName: string;
   constructor(fileName?: string) {
-    this.fileName = fileName || ":memory";
+    this.fileName = fileName || ":memory:";
   }
   connect(): Promise<Connection> {
     return new Promise((resolve, reject) => {

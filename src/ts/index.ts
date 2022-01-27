@@ -1,8 +1,15 @@
 import { Connection } from "./types";
-import installScript from "!!raw-loader!../sql/install.sql";
+import { readFileSync } from "fs";
+import { join } from "path";
+import { getMetaTable } from "./utils";
 
-export function setup(connection: Connection) {
-
+export async function install(connection: Connection) {
+  const installScript = readFileSync(
+    join(__dirname, "..", "sql", "install.sql")
+  ).toString();
+  await connection.execute(installScript);
 }
 
-console.log(a)
+export async function setupTable(connection: Connection, name: string) {
+  const columns = await getMetaTable(connection, name);
+}
