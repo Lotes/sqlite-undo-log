@@ -1,8 +1,0 @@
-#ifndef CATEGORIES_H
-#define CATEGORIES_H
-#include "shared.hsql"
-CREATE TABLE __TABLE_PREFIX(categories) (
-  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE
-);
-#endif

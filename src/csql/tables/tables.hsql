@@ -1,8 +1,0 @@
-#ifndef TABLES_H
-#define TABLES_H
-#include "shared.hsql"
-CREATE TABLE __TABLE_PREFIX(tables) (
-  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE
-);
-#endif

@@ -15,7 +15,7 @@ afterEach(() => {
 
 });
 
-test("all tables are  ready", async () => {
+test("all tables are ready", async () => {
   [
     "actions",
     "categories",
