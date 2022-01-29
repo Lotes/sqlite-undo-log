@@ -16,14 +16,15 @@ CREATE TABLE undo_changes (
   id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
   row_id INTEGER NOT NULL,
   action_id INTEGER NOT NULL,
-  type TEXT CHECK(type IN ('INSERT','DELETE','CREATE')),
+  order_index INTEGER NOT NULL,
+  type TEXT CHECK(type IN ('INSERT','DELETE','UPDATE')),
   FOREIGN KEY (action_id)
     REFERENCES undo_actions(id)
     ON DELETE CASCADE
 );
 
-CREATE TABLE undo_controls (
-  head_id INTEGER NOT NULL PRIMARY KEY,
+CREATE TABLE undo_channels (
+  id INTEGER NOT NULL PRIMARY KEY,
   action_id INTEGER NULL,
   FOREIGN KEY(action_id)
     REFERENCES undo_actions(id)
@@ -32,7 +33,11 @@ CREATE TABLE undo_controls (
 
 CREATE TABLE undo_tables (
   id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL UNIQUE
+  name TEXT NOT NULL UNIQUE,
+  channel_id INTEGER NOT NULL,
+  FOREIGN KEY(channel_id)
+    REFERENCES undo_channels(id)
+    ON DELETE CASCADE
 );
 
 CREATE TABLE undo_columns (

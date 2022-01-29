@@ -6,6 +6,9 @@ export class ConnectionImpl implements Connection {
   constructor(db: sqlite.Database){
     this.db = db;
   }
+  escapeString(str: string): string {
+    return `'${str.replace(/\'/g,"''")}'`;
+  }
   execute(query: string): Promise<void> {
     return new Promise<void>((resolve, reject)=>{
       this.db.exec(query, function(err) {
@@ -38,7 +41,7 @@ export class ConnectionImpl implements Connection {
   }
   getAll<T=Row>(query: string, parameters?: Parameters): Promise<T[]> {
     return new Promise<T[]>((resolve, reject)=>{
-      this.db.get(query, parameters, function(err, rows) {
+      this.db.all(query, parameters, function(err, rows) {
         if(err == null) {
           return resolve(rows || []);
         }

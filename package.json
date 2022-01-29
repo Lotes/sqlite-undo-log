@@ -7,10 +7,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "build-sql": "sh ./src/csql/compile.sh ./src/csql/install.csql > ./src/sql/install.sql",
-    "test-sql": "sqlite3 < ./src/sql/install.sql",
     "build": "webpack",
-    "sql": "yarn run build-sql && yarn run test-sql",
     "start": "yarn run build && node ./bin/index.js",
     "watch": "webpack -w",
     "test": "jest"
