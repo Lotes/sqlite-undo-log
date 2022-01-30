@@ -1,5 +1,5 @@
 import sqlite from "sqlite3";
-import { Database, Connection, Row, RunResult, Parameters } from "./types";
+import { Database, Connection, Row, RunResult, Parameters } from "../types";
 
 export class ConnectionImpl implements Connection {
   private db: sqlite.Database;
