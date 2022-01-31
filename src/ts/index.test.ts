@@ -33,9 +33,17 @@ test("insertion works", async () => {
   await setup.addTable("all_types", 0);
 
   // act
-  //await insertIntoTable(connection, "all_types", AllTypeTable.Values);
+  await insertIntoTable(connection, "all_types", AllTypeTable.Values[0]);
 
   // assert
+  const rows = await connection.getAll("SELECT column_id, new_value FROM undo_values");
+  expect(rows).toEqual([
+    {column_id: 0, new_value: 1},
+    {column_id: 1, new_value: 'one'},
+    {column_id: 2, new_value: 1},
+    {column_id: 3, new_value: 'juan'},
+    {column_id: 4, new_value: 0},
+  ]);
 });
 
 test.todo("deletion works");

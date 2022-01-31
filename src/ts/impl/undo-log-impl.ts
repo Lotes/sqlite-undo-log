@@ -70,39 +70,16 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     AFTER INSERT ON ${name}
     FOR EACH ROW
   BEGIN
-    CREATE IF NOT EXIST TEMP TABLE variables(
-      name INTEGER PRIMARY KEY,
-      value INTEGER NULL
-    );
-    --currentActionId := channel.action.id
-    INSERT INTO variables (name, value)
-      SELECT ${Variable_CurrentActionId}, action_id
-      FROM undo_tables
-      WHERE name=${this.connection.escapeString(name)};
-    --currentOrderIndex := MAX(change.orderIndex where change.action.id = channel.action.id)+1
-    INSERT INTO variables (name, value)
-      SELECT ${Variable_CurrentOrderIndex}, MAX(ch.order_index) + 1
-      FROM undo_changes ch INNER JOIN variables v
-      ON (v.name=${Variable_CurrentActionId} AND ch.action_id=v.value);
-    --+=new Change(INSERT, rowid, currentActionId, currentOrderIndex)
     INSERT INTO undo_changes (type, row_id, action_id, order_index)
-      SELECT 'INSERT', NEW.rowid, (${this.queryVariable(
-        Variable_CurrentActionId
-      )}), (${this.queryVariable(Variable_CurrentOrderIndex)});
-    --currentChangeId := last-row-id
-    INSERT INTO variables (name, value)
-      SELECT ${Variable_CurrentChangeId}, last_insert_rowid();
-    --save column values
+      SELECT 'INSERT', 123, ch.action_id, MAX(IFNULL(c.order_index,0))+1 AS order_index
+      FROM undo_tables t
+        INNER JOIN undo_channels ch ON t.channel_id=ch.id
+        LEFT JOIN undo_changes c ON ch.action_id=c.action_id
+      WHERE t.name='persons'
+      GROUP BY ch.action_id;
+
     INSERT INTO undo_values (column_id, change_id, new_value)
-      ${columns
-        .map(
-          (c) =>
-            `SELECT
-          (${this.queryColumn(name, c.name)}),
-          (${this.queryVariable(Variable_CurrentChangeId)}),
-          NEW.${c.name}`
-        )
-        .join(" UNION ")};
+      ${columns.map((c) => `SELECT ${c.id}, last_insert_rowid(), NEW.${c.name}`).join(" UNION ")};
   END;`;
     await this.connection.execute(query);
   }

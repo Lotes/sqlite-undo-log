@@ -55,12 +55,23 @@ export async function createTable(connection: Connection, name: string, definiti
     await connection.execute(query);
 }
 
+export function cellToString(connection: Connection, value: any) {
+    if(value == null) {
+        return null;
+    }
+    if(value instanceof Buffer) {
+        value = (value as Buffer).toLocaleString();
+    }
+    return connection.escapeString(value.toString());
+}
+
 export async function insertIntoTable(connection: Connection, name: string, row: Record<string, any>) {
     const columns = Object.getOwnPropertyNames(row)
                          .join(", ");
     const values = Object.getOwnPropertyNames(row)
-                         .map(n => `${typeof(row[n]) === "string" ? connection.escapeString(row[n]) : row[n] == null ? "NULL" : row[n]}`)
+                         .map(n => cellToString(connection, row[n]))
                          .join(", ");
     const query = `INSERT INTO ${name} (${columns}) VALUES  (${values})`;
+    console.log(query)
     await connection.run(query);
 }
