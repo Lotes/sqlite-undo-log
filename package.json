@@ -10,7 +10,8 @@
     "build": "webpack",
     "start": "yarn run build && node ./bin/index.js",
     "watch": "webpack -w",
-    "test": "jest"
+    "test": "jest",
+    "diagrams": "puml generate docs/tables.puml -s -o docs/tables.svg"
   },
   "repository": {
     "type": "git",
