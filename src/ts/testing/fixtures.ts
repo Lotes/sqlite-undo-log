@@ -4,11 +4,11 @@ export namespace AllTypeTable {
     export const Definition: TableDefinition = {
         primaryKey: ["id"],
         columns: {
-            id: "REAL",
+            id: "INTEGER",
             name: "TEXT",
             num: "NUMERIC",
             blob: "BLOB",
-            zero: "INTEGER"
+            zero: "REAL"
         }        
     };
     export interface Row {

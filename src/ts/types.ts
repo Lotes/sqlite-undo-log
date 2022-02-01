@@ -28,7 +28,7 @@ export interface TableDefinitions {
   [name: string]: TableDefinition;
 }
 
-export type Parameters = Record<string, string | number | boolean>;
+export type Parameters = Record<string, string | number | boolean | null>;
 export type Row = Record<string, string | number | boolean>;
 export interface RunResult {
   lastID?: number;

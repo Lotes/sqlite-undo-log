@@ -6,8 +6,12 @@ export interface UndoLogSetup {
 }
 
 export interface UndoLog {
-  beginAction(categoryName: string): Promise<number>;
-  endAction(): Promise<void>;
+  next(channel: number, categoryName?: string): Promise<void>;
   undo(channel: number): Promise<void>;
-  redo(channel: number): Promise<void>;
+}
+
+export class UndoLogError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
 }
