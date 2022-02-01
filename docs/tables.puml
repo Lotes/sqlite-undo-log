@@ -50,8 +50,8 @@ Channel o-- Action
 Action o-- Category
 Action o-- Change
 Change o-- Table
-Change o-- Value
 Change o-- ChangeType
 Table o-- Channel
 Column o-down- Table 
 Value o-- Column
+Value o-- Change
