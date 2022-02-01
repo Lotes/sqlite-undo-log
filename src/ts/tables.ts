@@ -165,5 +165,4 @@ const all: TableDefinitions = {
     values
 };
 
-export const tableOrder = ["categories", "actions", "changes", "channels", "tables", "columns", "values"];
 export default all;

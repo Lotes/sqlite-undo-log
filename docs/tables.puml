@@ -1,0 +1,56 @@
+skinparam monochrome true
+skinparam ranksep 20
+skinparam dpi 150
+skinparam packageTitleAlignment left
+skinparam usecaseBorderThickness 0.4
+skinparam defaultFontSize 12
+skinparam rectangleBorderThickness 1
+hide methods
+
+class Category {
+  name: string
+  icon: string
+}
+
+class Action {
+  createdAt: Date
+}
+
+class Change {
+  type: ChangeType
+  rowId: int
+  orderIndex: int
+}
+
+enum ChangeType {
+  Insert
+  Update
+  Delete
+}
+
+class Table {
+  name: string
+}
+
+class Column {
+  name: string
+  type: string
+}
+
+class Value {
+  oldValue: string
+  newValue: string
+}
+
+class Channel {
+  id: int
+}
+
+Action o-- Category
+Action o-- Change
+Change o-- Value
+Change o-- ChangeType
+Column o-down- Table 
+Value o-- Column
+Channel o-- Action
+Table o-- Channel

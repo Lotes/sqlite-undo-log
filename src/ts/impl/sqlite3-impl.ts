@@ -58,10 +58,13 @@ export class DatabaseImpl implements Database {
   }
   connect(): Promise<Connection> {
     return new Promise((resolve, reject) => {
-      const db = new sqlite.Database(this.fileName, (err) => {
+      const db = new sqlite.Database(this.fileName, async (err) => {
         if(err == null) {
           const connection: Connection = new ConnectionImpl(db);
-          return resolve(connection);
+          connection.execute("PRAGMA foreignKeys=1")
+                    .then(() => resolve(connection))
+                    .catch(reject);
+          return;
         }
         return reject(err);
       });

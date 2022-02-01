@@ -72,6 +72,5 @@ export async function insertIntoTable(connection: Connection, name: string, row:
                          .map(n => cellToString(connection, row[n]))
                          .join(", ");
     const query = `INSERT INTO ${name} (${columns}) VALUES  (${values})`;
-    console.log(query)
     await connection.run(query);
 }
