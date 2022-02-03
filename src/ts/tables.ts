@@ -1,5 +1,25 @@
 import { TableDefinition, TableDefinitions } from "./types";
 
+namespace Channels {
+  export const TableDef: TableDefinition = {
+    primaryKey: ["id"],
+    columns: {
+      id: "INTEGER",
+      status: {
+        type: "TEXT",
+        canBeNull: false,
+        check: "status IN ('READY','RECORDING','UNDOING','REDOING')"
+      }
+    }
+  };
+
+  type Status = "READY"|"RECORDING"|"UNDOING"|"REDOING";
+  export interface Row {
+    id: number;
+    status: Status;
+  }
+}
+
 namespace Categories {
   export const TableDef: TableDefinition = {
     primaryKey: ["id"],
@@ -27,16 +47,34 @@ namespace Actions {
         type: "TEXT",
         canBeNull: false,
       },
+      order_index: {
+        type: "INTEGER",
+        canBeNull: false,
+      },
+      undone: {
+        type: "INTEGER",
+        canBeNull: false,
+        check: "undone IN (0, 1)"
+      },
       category_id: {
         type: "INTEGER",
         canBeNull: true,
       },
+      channel_id: {
+        type: "INTEGER",
+        canBeNull: false,
+      }
     },
     foreignKeys: {
       category_id: {
         referencedTable: "categories",
         column: "id",
         onDelete: "SET_NULL",
+      },
+      channel_id: {
+        referencedTable: "channels",
+        column: "id",
+        onDelete: "CASCADE"
       },
     },
   };
@@ -45,6 +83,9 @@ namespace Actions {
     id: number;
     created_at: string;
     category_id: number | null;
+    channel_id: number;
+    order_index: number;
+    undone: boolean;
   }
 }
 
@@ -84,31 +125,6 @@ namespace Changes {
     table_id: number;
     order_id: number;
     type: "INSERT" | "DELETE" | "UPDATE";
-  }
-}
-
-namespace Channels {
-  export const TableDef: TableDefinition = {
-    primaryKey: ["id"],
-    columns: {
-      id: "INTEGER",
-      action_id: {
-        type: "INTEGER",
-        canBeNull: true,
-      },
-    },
-    foreignKeys: {
-      action_id: {
-        referencedTable: "actions",
-        column: "id",
-        onDelete: "NOTHING",
-      },
-    },
-  };
-
-  export interface Row {
-    id: number;
-    action_id: number | null;
   }
 }
 
@@ -225,10 +241,10 @@ namespace Values {
 }
 
 const all: TableDefinitions = {
+  channels: Channels.TableDef,
   categories: Categories.TableDef,
   actions: Actions.TableDef,
   changes: Changes.TableDef,
-  channels: Channels.TableDef,
   tables: Tables.TableDef,
   columns: Columns.TableDef,
   values: Values.TableDef,

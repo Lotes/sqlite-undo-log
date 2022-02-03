@@ -1,21 +1,29 @@
-import { DatabaseImpl } from "./impl/sqlite3-impl";
-import { Connection, Database } from "./types";
-import { UndoLogImpl, UndoLogSetupImpl } from "./impl/undo-log-impl";
-import { doesTableExist } from "./testing/assertions";
-import { createTable, insertIntoTable } from "./utils";
+import { DatabaseImpl } from "./impl/sqlite3";
+import { Connection, Database, UndoLog, UndoLogSetup } from "./types";
+import { Assertions } from "./testing/assertions";
 import { AllTypeTable } from "./testing/fixtures";
-import { UndoLog, UndoLogSetup } from "./undo-log";
 import tables, { Row } from "./tables";
+import path from "path";
+import {promises} from "fs";
+import { UndoLogImpl } from "./impl/undo-log";
+import { UndoLogSetupImpl } from "./impl/undo-log-setup";
+import { UndoLogUtils } from "./impl/undo-log-utils";
 
-const database: Database = new DatabaseImpl();
 let connection: Connection;
 let setup: UndoLogSetup;
 let log: UndoLog;
+let utils: UndoLogUtils;
+let assertions: Assertions;
 
 beforeEach(async () => {
+  const fileName = path.join(__dirname, "..", "..", "output", expect.getState().currentTestName + ".sqlite3");
+  await promises.rm(fileName);
+  const database: Database = new DatabaseImpl(fileName);
   connection = await database.connect();
-  setup = new UndoLogSetupImpl(connection);
-  log = new UndoLogImpl(connection);
+  utils = new UndoLogUtils(connection, {debug: true})
+  assertions = new Assertions(utils, true);
+  setup = new UndoLogSetupImpl(connection, {debug: true});
+  log = new UndoLogImpl(connection, {debug: true});
   await setup.install();
 });
 
@@ -25,18 +33,18 @@ afterEach(() => {
 
 test("all tables are ready", async () => {
   const expected = Object.getOwnPropertyNames(tables);
-  const actual = await Promise.all(expected.map(async (name) => (await doesTableExist(connection, "undo_" + name)) ? name : null));
+  const actual = await Promise.all(expected.map(async (name) => (await utils.doesTableExist("undo_" + name)) ? name : null));
   expect(actual).toStrictEqual(expected);
 });
 
 test("insertion works", async () => {
   // arrange
-  await createTable(connection, "all_types", AllTypeTable.Definition);
+  await utils.createTable("all_types", AllTypeTable.Definition);
   await setup.addTable("all_types", 0);
-  await log.next(0);
-
-  // act
-  await insertIntoTable(connection, "all_types", AllTypeTable.Values[0]);
+  await log.recordWithin(0, undefined, async() => {
+    // act
+    await utils.insertIntoTable("all_types", AllTypeTable.Values[0]);
+  });
 
   // assert
   const rows = await connection.getAll("SELECT column_id, new_value FROM undo_values");
@@ -57,10 +65,11 @@ test("insertion works", async () => {
 
 test("undo of insertion works", async () => {
   // arrange
-  await createTable(connection, "all_types", AllTypeTable.Definition);
+  await utils.createTable("all_types", AllTypeTable.Definition);
   await setup.addTable("all_types", 0);
-  await log.next(0);
-  await insertIntoTable(connection, "all_types", AllTypeTable.Values[0]);
+  await log.recordWithin(0, undefined, async () =>   {
+    await utils.insertIntoTable("all_types", AllTypeTable.Values[0]);
+  });
 
   // act
   await log.undo(0);

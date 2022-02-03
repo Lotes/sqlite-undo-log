@@ -14,10 +14,11 @@ class Category {
 
 class Action {
   createdAt: Date
+  orderIndex: int
+  undone: boolean
 }
 
 class Change {
-  type: ChangeType
   rowId: int
   orderIndex: int
 }
@@ -46,12 +47,19 @@ class Channel {
   id: int
 }
 
-Channel o-- Action
+enum ChannelStatus {
+  Undoing = -1
+  Recording = 0
+  Redoing = +1
+}
+
+Channel o-- ChannelStatus
+Action o-- Channel
 Action o-- Category
 Action o-- Change
 Change o-- Table
 Change o-- ChangeType
 Table o-- Channel
-Column o-down- Table 
+Column o-- Table 
 Value o-- Column
 Value o-- Change
