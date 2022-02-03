@@ -1,29 +1,28 @@
 import tables from "../tables";
 import { Assertions } from "../testing/assertions";
-import { Connection, TableColumn, UndoLogOptions, UndoLogSetup } from "../types";
-import { UndoLogUtils } from "./undo-log-utils";
+import { UndoLogUtils, Connection, TableColumn, UndoLogOptions, UndoLogSetup } from "../types";
 
 export class UndoLogSetupImpl implements UndoLogSetup {
   private connection: Connection;
   private prefix: string;
   private assertions: Assertions;
   private utils: UndoLogUtils;
-  constructor(connection: Connection, options?: UndoLogOptions) {
+  constructor(connection: Connection, utils: UndoLogUtils, options?: UndoLogOptions) {
     const opts = Object.assign({ debug: false, prefix: "undo_" }, options);
     this.connection = connection;
     this.prefix = opts.prefix;
-    this.utils = new UndoLogUtils(connection, opts);
+    this.utils = utils;
     this.assertions = new Assertions(this.utils, opts.debug);
   }
   async install(): Promise<void> {
     for (const n of Object.getOwnPropertyNames(tables)) {
-      await this.utils.createTable(n, tables[n]);
+      await this.utils.createUndoLogTable(n, tables[n]);
     }
   }
   async uninstall(): Promise<void> {
     //TODO drop triggers
     for (const n of Object.getOwnPropertyNames(tables).reverse()) {
-      await this.utils.dropTable(`${this.prefix}${n}`);
+      await this.utils.dropUndoLogTable(`${n}`);
     }
   }
   async addTable(name: string, channelId: number): Promise<void> {

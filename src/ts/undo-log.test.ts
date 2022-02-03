@@ -1,5 +1,5 @@
 import { DatabaseImpl } from "./impl/sqlite3";
-import { Connection, Database, UndoLog, UndoLogSetup } from "./types";
+import { Connection, Database, UndoLog, UndoLogSetup, UndoLogUtils } from "./types";
 import { Assertions } from "./testing/assertions";
 import { AllTypeTable } from "./testing/fixtures";
 import tables, { Row } from "./tables";
@@ -7,7 +7,7 @@ import path from "path";
 import {promises} from "fs";
 import { UndoLogImpl } from "./impl/undo-log";
 import { UndoLogSetupImpl } from "./impl/undo-log-setup";
-import { UndoLogUtils } from "./impl/undo-log-utils";
+import { UndoLogUtilsImpl } from "./impl/undo-log-utils";
 
 let connection: Connection;
 let setup: UndoLogSetup;
@@ -20,10 +20,10 @@ beforeEach(async () => {
   await promises.rm(fileName);
   const database: Database = new DatabaseImpl(fileName);
   connection = await database.connect();
-  utils = new UndoLogUtils(connection, {debug: true})
+  utils = new UndoLogUtilsImpl(connection, {debug: true})
   assertions = new Assertions(utils, true);
-  setup = new UndoLogSetupImpl(connection, {debug: true});
-  log = new UndoLogImpl(connection, {debug: true});
+  setup = new UndoLogSetupImpl(connection, utils, {debug: true});
+  log = new UndoLogImpl(connection, utils, {debug: true});
   await setup.install();
 });
 
@@ -39,7 +39,7 @@ test("all tables are ready", async () => {
 
 test("insertion works", async () => {
   // arrange
-  await utils.createTable("all_types", AllTypeTable.Definition);
+  await utils.createUndoLogTable("all_types", AllTypeTable.Definition);
   await setup.addTable("all_types", 0);
   await log.recordWithin(0, undefined, async() => {
     // act
@@ -65,7 +65,7 @@ test("insertion works", async () => {
 
 test("undo of insertion works", async () => {
   // arrange
-  await utils.createTable("all_types", AllTypeTable.Definition);
+  await utils.createUndoLogTable("all_types", AllTypeTable.Definition);
   await setup.addTable("all_types", 0);
   await log.recordWithin(0, undefined, async () =>   {
     await utils.insertIntoTable("all_types", AllTypeTable.Values[0]);

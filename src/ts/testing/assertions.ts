@@ -1,4 +1,4 @@
-import { UndoLogUtils } from "../impl/undo-log-utils";
+import { UndoLogUtils } from "../types";
 
 export class AssertionError extends Error {
   constructor(message: string) {

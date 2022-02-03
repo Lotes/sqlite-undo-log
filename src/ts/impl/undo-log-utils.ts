@@ -1,7 +1,7 @@
 import { Row } from "../tables";
-import { Connection, TableDefinition, SqliteColumnDefinition, ForeignKey, PragmaTableInfo, TableColumn, UndoLogError, UndoLogOptions } from "../types";
+import { Connection, TableDefinition, SqliteColumnDefinition, ForeignKey, PragmaTableInfo, TableColumn, UndoLogError, UndoLogOptions, UndoLogUtils } from "../types";
 
-export class UndoLogUtils {
+export class UndoLogUtilsImpl implements UndoLogUtils {
   private connection: Connection;
   private prefix: string;
   constructor(connection: Connection, options?: UndoLogOptions) {
@@ -10,7 +10,7 @@ export class UndoLogUtils {
     this.prefix = opts.prefix;
   }
 
-  async createTable(tableName: string, definition: TableDefinition) {
+  async createUndoLogTable(tableName: string, definition: TableDefinition) {
     const columns = Object.getOwnPropertyNames(definition.columns).map((n) => {
       const xxx = definition.columns[n];
       const def =
@@ -47,12 +47,12 @@ export class UndoLogUtils {
         ? "," +
           definition.uniques.map((x) => `UNIQUE (${x.join(", ")})`).join(", ")
         : "";
-    const query = `CREATE TABLE ${this.prefix}${tableName} (${columns}${foreigns}${uniques});`;
+    const query = `CREATE TABLE ${tableName} (${columns}${foreigns}${uniques});`;
     await this.connection.execute(query);
   }
 
-  async dropTable(tableName: string) {
-    const query = `DROP TABLE ${tableName}`;
+  async dropUndoLogTable(tableName: string) {
+    const query = `DROP TABLE ${this.prefix}${tableName}`;
     await this.connection.execute(query);
   }
 
@@ -89,12 +89,12 @@ export class UndoLogUtils {
     return this.connection.escapeString(value.toString());
   }
 
-  async insertIntoTable(name: string, row: Record<string, any>) {
+  async insertIntoTable<T extends Record<string, any>>(name: string, row: T) {
     const columns = Object.getOwnPropertyNames(row).join(", ");
     const values = Object.getOwnPropertyNames(row)
       .map((n) => this.cellToString(row[n]))
       .join(", ");
-    const query = `INSERT INTO ${name} (${columns}) VALUES  (${values})`;
+    const query = `INSERT INTO ${name} (${columns}) VALUES (${values})`;
     await this.connection.run(query);
   }
 
@@ -123,7 +123,7 @@ export class UndoLogUtils {
   }
 
   async hasTableId(name: string, id: number) {
-    const query = "SELECT 1 FROM ${name} WHERE id=$id";
+    const query = `SELECT 1 FROM ${name} WHERE id=$id`;
     const parameters = { $id: id };
     const row = await this.connection.getSingle(query, parameters);
     return row != null;

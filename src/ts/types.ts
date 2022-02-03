@@ -1,3 +1,5 @@
+import { Row } from "./tables";
+
 export type SqliteType = "TEXT" | "NUMERIC" | "INTEGER" | "REAL" | "BLOB";
 export interface SqliteColumnDefinition {
   type: SqliteType;
@@ -27,7 +29,6 @@ export interface TableDefinitions {
 }
 
 export type Parameters = Record<string, string | number | boolean | null>;
-export type Row = Record<string, string | number | boolean>;
 export interface RunResult {
   lastID?: number;
   changes?: number;
@@ -37,8 +38,8 @@ export interface Connection {
   escapeString(str: string): string;
   execute(query: string): Promise<void>;
   run(query: string, parameters?: Parameters): Promise<RunResult>;
-  getSingle<T = Row>(query: string, parameters?: Parameters): Promise<T | null>;
-  getAll<T = Row>(query: string, parameters?: Parameters): Promise<T[]>;
+  getSingle<T>(query: string, parameters?: Parameters): Promise<T | null>;
+  getAll<T>(query: string, parameters?: Parameters): Promise<T[]>;
 }
 
 export interface Database {
@@ -66,6 +67,18 @@ export interface PragmaTableInfo {
 export interface UndoLogOptions {
   debug?: boolean;
   prefix?: string;
+}
+
+export interface UndoLogUtils {
+  createUndoLogTable(tableName: string, definition: TableDefinition): Promise<void>;
+  dropUndoLogTable(tableName: string): Promise<void>;
+  createChannel(channel: number): Promise<Row.Channel>;
+  updateChannel(channel: number, status: Row.Channel["status"]): Promise<void>;
+  cellToString(value: any): string|null;
+  insertIntoTable<T extends Record<string, any>>(name: string, row: T): Promise<void>;
+  getMetaTable(name: string): Promise<TableColumn[]>;
+  doesTableExist(name: string): Promise<boolean>;
+  hasTableId(name: string, id: number): Promise<boolean>;
 }
 
 export interface UndoLogSetup {

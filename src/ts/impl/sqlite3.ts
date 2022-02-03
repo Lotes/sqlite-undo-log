@@ -1,5 +1,5 @@
 import sqlite from "sqlite3";
-import { Database, Connection, Row, RunResult, Parameters } from "../types";
+import { Database, Connection, RunResult, Parameters } from "../types";
 
 export class ConnectionImpl implements Connection {
   private db: sqlite.Database;
@@ -29,7 +29,7 @@ export class ConnectionImpl implements Connection {
       })
     });
   }
-  getSingle<T=Row>(query: string, parameters?: Parameters): Promise<T|null> {
+  getSingle<T>(query: string, parameters?: Parameters): Promise<T|null> {
     return new Promise<T|null>((resolve, reject)=>{
       this.db.get(query, parameters, function(err, row) {
         if(err == null) {
@@ -39,7 +39,7 @@ export class ConnectionImpl implements Connection {
       })
     });
   }
-  getAll<T=Row>(query: string, parameters?: Parameters): Promise<T[]> {
+  getAll<T>(query: string, parameters?: Parameters): Promise<T[]> {
     return new Promise<T[]>((resolve, reject)=>{
       this.db.all(query, parameters, function(err, rows) {
         if(err == null) {
