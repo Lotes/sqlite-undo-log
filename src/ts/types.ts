@@ -65,6 +65,7 @@ export interface PragmaTableInfo {
 }
 
 export interface UndoLogUtils {
+  createTable(tableName: string, tableDef: TableDefinition): Promise<void>;
   createUndoLogTable(tableName: string, definition: TableDefinition): Promise<void>;
   insertIntoUndoLogTable<T extends Record<string, any>>(tableName: string, row: T): Promise<void>;
   dropUndoLogTable(tableName: string): Promise<void>;

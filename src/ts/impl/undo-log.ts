@@ -12,9 +12,6 @@ export class UndoLogImpl implements UndoLog {
   }
   async recordWithin(channelId: number, categoryName: string|undefined, action: () => Promise<void>): Promise<void> {
     const channel = await this.utils.getOrCreateReadyChannel(channelId);
-    if(channel.status !== "READY") {
-      throw new UndoLogError("Forbidden call: undo log must be in status READY for recording actions.");
-    }
     const categoryId = await this.getOrCreateCategory(categoryName);
     await this.createNewAction(channel.id, categoryId);
     await this.utils.updateChannel(channel.id, "RECORDING");
@@ -28,12 +25,12 @@ export class UndoLogImpl implements UndoLog {
     const query = `
       INSERT INTO ${this.prefix}actions
               (created_at,      category_id, channel_id,  undone, order_index)
-        SELECT datetime('now'), $categoryId, a.channel_id, 0,      MAX(IFNULL(a.order_index, 0))+1
+        SELECT datetime('now'), $categoryId, ch.id, 0,      MAX(IFNULL(a.order_index, 0))+1
           FROM ${this.prefix}channels ch
             LEFT JOIN ${this.prefix}actions a
-            ON ch.id=a.channel_id
-          WHERE a.channel_id=$channelId
-          GROUP BY a.channel_id
+            ON ch.id=ch.id
+          WHERE ch.id=$channelId
+          GROUP BY ch.id
     `;
     const parameters = {
       $categoryId: categoryId,
@@ -59,15 +56,15 @@ export class UndoLogImpl implements UndoLog {
     }
     return null;
   }
-  async undo(channel: number): Promise<void> {
+  async undo(channelId: number): Promise<void> {
     const query = `SELECT a.* FROM ${this.prefix}channels ch LEFT JOIN ${this.prefix}actions a ON a.id=ch.action_id WHERE ch.id=$channel`;
-    const parameters = {$channel: channel};
+    const parameters = {$channel: channelId};
     const row = await this.connection.getSingle<Row.Action>(query, parameters);
     if(row == null) {
-      throw new UndoLogError(`No channel '${channel}' known!`);
+      throw new UndoLogError(`No channel '${channelId}' known!`);
     }
     if(row.id == null) {
-      throw new UndoLogError(`Channel '${channel}' is at the bottom of the action stack.`);
+      throw new UndoLogError(`Channel '${channelId}' is at the bottom of the action stack.`);
     }
     await this.undoAction(row);
   }

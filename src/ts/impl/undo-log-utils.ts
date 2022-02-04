@@ -17,43 +17,56 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
   }
 
   async createUndoLogTable(tableName: string, definition: TableDefinition) {
-    const columns = Object.getOwnPropertyNames(definition.columns).map((n) => {
+    const columns = this.createColumnDefinitions(definition);
+    const foreigns = this.createForeignKeys(definition, this.prefix);
+    const uniques = this.createUniqueKeys(definition);
+    const query = `CREATE TABLE ${this.prefix}${tableName} (${columns}${foreigns}${uniques});`;
+    await this.connection.execute(query);
+  }
+
+  private createUniqueKeys(definition: TableDefinition) {
+    return definition.uniques != null
+      ? "," +
+      definition.uniques.map((x) => `UNIQUE (${x.join(", ")})`).join(", ")
+      : "";
+  }
+
+  private createForeignKeys(definition: TableDefinition, prefix: string) {
+    const foreignFunc = (n: string, f: ForeignKey) => `FOREIGN KEY(${n}) REFERENCES ${prefix}${f.referencedTable}(${f.column}) ${f.onDelete === "CASCADE"
+        ? "ON DELETE CASCADE"
+        : f.onDelete === "SET_NULL"
+          ? "ON DELETE SET NULL"
+          : ""}`;
+    const foreigns = definition.foreignKeys != null
+      ? "," +
+      Object.getOwnPropertyNames(definition.foreignKeys)
+        .map((fk) => {
+          return foreignFunc(fk, definition.foreignKeys![fk]);
+        })
+        .join(", ")
+      : "";
+    return foreigns;
+  }
+
+  createColumnDefinitions(definition: TableDefinition) {
+    return Object.getOwnPropertyNames(definition.columns).map((n) => {
       const xxx = definition.columns[n];
-      const def =
-        typeof xxx == "string"
-          ? { type: xxx }
-          : (xxx as SqliteColumnDefinition);
+      const def = typeof xxx == "string"
+        ? { type: xxx }
+        : (xxx as SqliteColumnDefinition);
       const pk = definition.primaryKey.indexOf(n) > -1;
       const ai = pk ? "PRIMARY KEY AUTOINCREMENT" : "";
       const nn = !pk && def.canBeNull === false;
       const ch = def.check != null ? `CHECK(${def.check})` : "";
       return `${n} ${def.type} ${!pk ? (nn ? "NOT NULL" : "NULL") : ai} ${ch}`;
     });
-    const foreignFunc = (n: string, f: ForeignKey) =>
-      `FOREIGN KEY(${n}) REFERENCES ${this.prefix}${f.referencedTable}(${
-        f.column
-      }) ${
-        f.onDelete === "CASCADE"
-          ? "ON DELETE CASCADE"
-          : f.onDelete === "SET_NULL"
-          ? "ON DELETE SET NULL"
-          : ""
-      }`;
-    const foreigns =
-      definition.foreignKeys != null
-        ? "," +
-          Object.getOwnPropertyNames(definition.foreignKeys)
-            .map((fk) => {
-              return foreignFunc(fk, definition.foreignKeys![fk]);
-            })
-            .join(", ")
-        : "";
-    const uniques =
-      definition.uniques != null
-        ? "," +
-          definition.uniques.map((x) => `UNIQUE (${x.join(", ")})`).join(", ")
-        : "";
-    const query = `CREATE TABLE ${this.prefix}${tableName} (${columns}${foreigns}${uniques});`;
+  }
+
+  async createTable(tableName: string, definition: TableDefinition): Promise<void> {
+    const columns = this.createColumnDefinitions(definition);
+    const foreigns = this.createForeignKeys(definition, "");
+    const uniques = this.createUniqueKeys(definition);
+    const query = `CREATE TABLE ${tableName} (${columns}${foreigns}${uniques});`;
     await this.connection.execute(query);
   }
 
@@ -108,8 +121,8 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
   }
 
   async getMetaTable(name: string) {
-    const cleanName = name.replace("'", "");
-    const query = `SELECT * FROM pragma_table_info('${cleanName}')`;
+    const cleanName = this.connection.escapeString(name);
+    const query = `SELECT * FROM pragma_table_info(${cleanName})`;
     const columns = await this.connection.getAll<PragmaTableInfo>(query);
     return columns.map<TableColumn>((pti) => {
       return {

@@ -1,5 +1,5 @@
 import tables from "../tables";
-import { UndoLogUtils, Connection, TableColumn, UndoLogSetup, Assertions } from "../types";
+import { UndoLogUtils, Connection, TableColumn, UndoLogSetup } from "../types";
 
 export class UndoLogSetupImpl implements UndoLogSetup {
   private connection: Connection;
@@ -31,7 +31,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     const columns = await this.utils.getMetaTable(tableName);
     const keyTable = "$table";
     let parameters: Record<string, string | number> = { [keyTable]: tableId };
-    const dataStrings: string[] = [];
+    let dataStrings: string[] = [];
     columns.forEach((c) => {
       const keyId = `\$id${c.id}`;
       const keyName = `\$name${c.id}`;

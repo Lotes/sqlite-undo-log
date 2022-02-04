@@ -27,10 +27,6 @@ beforeEach(async () => {
   await setup.install();
 });
 
-afterEach(() => {
-
-});
-
 test("all tables are ready", async () => {
   const expected = Object.getOwnPropertyNames(tables);
   const actual = await Promise.all(expected.map(async (name) => (await utils.doesTableExist("undo_" + name)) ? name : null));
@@ -39,7 +35,7 @@ test("all tables are ready", async () => {
 
 test("insertion works", async () => {
   // arrange
-  await utils.createUndoLogTable("all_types", AllTypeTable.Definition);
+  await utils.createTable("all_types", AllTypeTable.Definition);
   await setup.addTable("all_types", 0);
   await log.recordWithin(0, undefined, async() => {
     // act
@@ -78,7 +74,3 @@ test("undo of insertion works", async () => {
   const rows = await connection.getAll("SELECT * FROM all_types");
   expect(rows).toEqual([]);
 });
-
-
-test.todo("deletion works");
-test.todo("update works");

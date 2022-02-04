@@ -11,6 +11,7 @@ export class ConnectionImpl implements Connection {
   }
   execute(query: string): Promise<void> {
     return new Promise<void>((resolve, reject)=>{
+      this.track(query);
       this.db.exec(query, function(err) {
         if(err == null) {
           return resolve();
@@ -21,6 +22,7 @@ export class ConnectionImpl implements Connection {
   }
   run(query: string, parameters?: Parameters): Promise<RunResult> {
     return new Promise<RunResult>((resolve, reject)=>{
+      this.track(query, parameters);
       this.db.run(query, parameters, function(err) {
         if(err == null) {
           return resolve(this);
@@ -31,6 +33,7 @@ export class ConnectionImpl implements Connection {
   }
   getSingle<T>(query: string, parameters?: Parameters): Promise<T|null> {
     return new Promise<T|null>((resolve, reject)=>{
+      this.track(query, parameters);
       this.db.get(query, parameters, function(err, row) {
         if(err == null) {
           return resolve(row || null);
@@ -41,6 +44,7 @@ export class ConnectionImpl implements Connection {
   }
   getAll<T>(query: string, parameters?: Parameters): Promise<T[]> {
     return new Promise<T[]>((resolve, reject)=>{
+      this.track(query, parameters);
       this.db.all(query, parameters, function(err, rows) {
         if(err == null) {
           return resolve(rows || []);
@@ -48,6 +52,10 @@ export class ConnectionImpl implements Connection {
         return reject(err);
       })
     });
+  }
+  private track(query: string, parameters: Parameters = {}) {
+    const where = new Error().stack?.split("\n")[2];
+    console.error({query, parameters, where});
   }
 }
 
