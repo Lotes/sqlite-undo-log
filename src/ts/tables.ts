@@ -1,4 +1,4 @@
-import { TableDefinition, TableDefinitions } from "./types";
+import { ChannelStatus, TableDefinition } from "./types";
 
 namespace Channels {
   export const TableDef: TableDefinition = {
@@ -13,10 +13,9 @@ namespace Channels {
     }
   };
 
-  type Status = "READY"|"RECORDING"|"UNDOING"|"REDOING";
   export interface Row {
     id: number;
-    status: Status;
+    status: ChannelStatus;
   }
 }
 
@@ -240,7 +239,7 @@ namespace Values {
   }
 }
 
-const all: TableDefinitions = {
+export default {
   channels: Channels.TableDef,
   categories: Categories.TableDef,
   actions: Actions.TableDef,
@@ -248,7 +247,7 @@ const all: TableDefinitions = {
   tables: Tables.TableDef,
   columns: Columns.TableDef,
   values: Values.TableDef,
-};
+} as Record<string, TableDefinition>;
 
 export namespace Row {
   export type Category = Categories.Row;
@@ -259,5 +258,3 @@ export namespace Row {
   export type Column = Columns.Row;
   export type Value = Values.Row;
 }
-
-export default all;

@@ -1,5 +1,5 @@
 import { Row } from "../tables";
-import { Connection, TableDefinition, SqliteColumnDefinition, ForeignKey, PragmaTableInfo, TableColumn, UndoLogError, UndoLogUtils } from "../types";
+import { Connection, TableDefinition, SqliteColumnDefinition, ForeignKey, PragmaTableInfo, TableColumn, UndoLogError, UndoLogUtils, ChannelStatus } from "../types";
 
 export class UndoLogUtilsImpl implements UndoLogUtils {
   private connection: Connection;
@@ -96,7 +96,6 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
     if (row.status !== "READY")  {
       throw new UndoLogError(`Expected channel '${channel}' to have status 'READY', but was '${row.status}'.`);
     }
-    return row;
   }
 
   async updateUndoLogTable<T extends Record<string, any> & {id: number}>(tableName: string, data: Partial<T>& {id: number}): Promise<void> {
@@ -110,7 +109,7 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
     await this.connection.run(query, parameters);
   }
 
-  async updateChannel(channelId: number, status: Row.Channel["status"]) {
+  async updateChannel(channelId: number, status: ChannelStatus) {
     await this.updateUndoLogTable<Row.Channel>("channels", {
       id: channelId,
       status

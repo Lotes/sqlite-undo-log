@@ -15,7 +15,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     this.utils = utils;
   }
   async install(): Promise<void> {
-    for (const n of Object.getOwnPropertyNames(tables)) {
+    for (const n of Object.keys(tables)) {
       await this.utils.createUndoLogTable(n, tables[n]);
     }
   }

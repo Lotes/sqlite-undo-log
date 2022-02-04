@@ -1,5 +1,3 @@
-import { Row } from "./tables";
-
 export type SqliteType = "TEXT" | "NUMERIC" | "INTEGER" | "REAL" | "BLOB";
 export interface SqliteColumnDefinition {
   type: SqliteType;
@@ -23,9 +21,6 @@ export interface TableDefinition {
   columns: TableColumns;
   uniques?: string[][];
   foreignKeys?: TableForeignKeys;
-}
-export interface TableDefinitions {
-  [name: string]: TableDefinition;
 }
 
 export type Parameters = Record<string, string | number | boolean | null>;
@@ -64,6 +59,8 @@ export interface PragmaTableInfo {
   pk: number;
 }
 
+export type ChannelStatus = "READY"|"RECORDING"|"UNDOING"|"REDOING";
+
 export interface UndoLogUtils {
   createUndoLogTable(tableName: string, definition: TableDefinition): Promise<void>;
   insertIntoUndoLogTable<T extends Record<string, any>>(tableName: string, row: T): Promise<void>;
@@ -72,9 +69,9 @@ export interface UndoLogUtils {
   
   markActionAsUndone(actionId: number, undone: boolean): Promise<void>;
   createTable(tableName: string, tableDef: TableDefinition): Promise<void>;
-  getOrCreateReadyChannel(channel: number): Promise<Row.Channel>;
+  getOrCreateReadyChannel(channel: number): Promise<void>;
   doesColumnExist(tableName: string, columnName: string): Promise<boolean>;
-  updateChannel(channel: number, status: Row.Channel["status"]): Promise<void>;
+  updateChannel(channel: number, status: ChannelStatus): Promise<void>;
   cellToString(value: any): string|null;
   insertIntoTable<T extends Record<string, any>>(name: string, row: T): Promise<void>;
   getMetaTable(name: string): Promise<TableColumn[]>;

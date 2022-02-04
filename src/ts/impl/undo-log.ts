@@ -11,10 +11,10 @@ export class UndoLogImpl implements UndoLog {
     this.utils = utils; 
   }
   async recordWithin(channelId: number, categoryName: string|undefined, action: () => Promise<void>): Promise<void> {
-    const channel = await this.utils.getOrCreateReadyChannel(channelId);
+    await this.utils.getOrCreateReadyChannel(channelId);
     const categoryId = await this.getOrCreateCategory(categoryName);
-    await this.createNewAction(channel.id, categoryId);
-    await this.doItWhileChannelHasStatus(channel.id, "RECORDING", action);
+    await this.createNewAction(channelId, categoryId);
+    await this.doItWhileChannelHasStatus(channelId, "RECORDING", action);
   }
   private async doItWhileChannelHasStatus(channelId: number, status: Row.Channel["status"],  action: () => Promise<void>){
     await this.utils.updateChannel(channelId, status);
