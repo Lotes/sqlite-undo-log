@@ -8,6 +8,10 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
     this.connection = connection;
     this.prefix = prefix;
   }
+  async doesColumnExist(tableName: string, columnName: string): Promise<boolean> {
+    const columns = await this.getMetaTable(tableName);
+    return columns.findIndex(c => c.name.toLowerCase() === columnName.toLowerCase()) > -1;
+  }
 
   async createUndoLogTable(tableName: string, definition: TableDefinition) {
     const columns = Object.getOwnPropertyNames(definition.columns).map((n) => {
@@ -46,7 +50,7 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
         ? "," +
           definition.uniques.map((x) => `UNIQUE (${x.join(", ")})`).join(", ")
         : "";
-    const query = `CREATE TABLE ${tableName} (${columns}${foreigns}${uniques});`;
+    const query = `CREATE TABLE ${this.prefix}${tableName} (${columns}${foreigns}${uniques});`;
     await this.connection.execute(query);
   }
 

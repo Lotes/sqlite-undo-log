@@ -1,13 +1,13 @@
-import { DatabaseImpl } from "./impl/sqlite3";
-import { Assertions, Connection, Database, UndoLog, UndoLogSetup, UndoLogUtils } from "./types";
-import { AllTypeTable } from "./testing/fixtures";
-import tables, { Row } from "./tables";
+import { DatabaseImpl } from "./sqlite3";
+import { Assertions, Connection, Database, UndoLog, UndoLogSetup, UndoLogUtils } from "../types";
+import { AllTypeTable } from "../testing/fixtures";
+import tables, { Row } from "../tables";
 import path from "path";
 import {promises} from "fs";
-import { UndoLogImpl } from "./impl/undo-log";
-import { UndoLogSetupImpl } from "./impl/undo-log-setup";
-import { UndoLogUtilsImpl } from "./impl/undo-log-utils";
-import { AssertionsImpl } from "./impl/assertions";
+import { UndoLogImpl } from "./undo-log";
+import { UndoLogSetupImpl } from "./undo-log-setup";
+import { UndoLogUtilsImpl } from "./undo-log-utils";
+import { AssertionsImpl } from "./assertions";
 
 let connection: Connection;
 let setup: UndoLogSetup;
@@ -16,12 +16,12 @@ let utils: UndoLogUtils;
 let assertions: Assertions;
 
 beforeEach(async () => {
-  const fileName = path.join(__dirname, "..", "..", "output", expect.getState().currentTestName + ".sqlite3");
-  await promises.rm(fileName);
+  const fileName = path.join("output", expect.getState().currentTestName.replace(/\s+/g, "_") + ".sqlite3");
+  await promises.rm(fileName, {force: true});
   const database: Database = new DatabaseImpl(fileName);
   connection = await database.connect();
   utils = new UndoLogUtilsImpl(connection)
-  assertions = new AssertionsImpl(utils, true);
+  assertions = new AssertionsImpl(utils);
   setup = new UndoLogSetupImpl(connection, utils);
   log = new UndoLogImpl(connection, utils);
   await setup.install();

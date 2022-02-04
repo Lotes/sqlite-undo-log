@@ -7,11 +7,13 @@ export class AssertionError extends Error {
 }
 
 export class AssertionsImpl implements Assertions {
-  private debug: boolean;
   private utils: UndoLogUtils;
-  constructor(utils: UndoLogUtils, debug: boolean) {
+  constructor(utils: UndoLogUtils) {
     this.utils = utils;
-    this.debug = debug;
+  }
+  async assertColumnExists(tableName: string, columnName: string): Promise<void> {
+    const exists = await this.utils.doesColumnExist(tableName, columnName);
+    this.assertTrue(exists, `Expected column '${tableName}.${columnName}' was not found.`);
   }
   assertTrue(value: boolean, message: string) {
     if (!value) {
@@ -22,16 +24,10 @@ export class AssertionsImpl implements Assertions {
     this.assertTrue(!value, message);
   }
   async assertTableExists(tableName: string) {
-    if (!this.debug) {
-      return;
-    }
     const result = await this.utils.doesTableExist(tableName);
     this.assertTrue(result, `Expected table '${tableName}', but was not found.`);
   }
   async assertTableDoesNotExist(tableName: string) {
-    if (!this.debug) {
-      return;
-    }
     const result = await this.utils.doesTableExist(tableName);
     this.assertFalse(
       result,
@@ -40,9 +36,6 @@ export class AssertionsImpl implements Assertions {
   }
 
   async assertTableHasId(tableName: string, id: number) {
-    if (!this.debug) {
-      return;
-    }
     const result = await this.utils.hasTableId(tableName, id);
     this.assertTrue(
       result,
