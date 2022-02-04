@@ -75,8 +75,7 @@ export class UndoLogImpl implements UndoLog {
     for(const change of changes) {
       await this.undoChange(change);
     }
-    //TODO set channel.action_id
-    //TODO undone flag
+    await this.utils.markActionAsUndone(action.id, true);
   }
   private async undoChange(change: Row.Change) {
     switch(change.type) {

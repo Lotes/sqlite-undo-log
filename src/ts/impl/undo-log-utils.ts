@@ -8,6 +8,12 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
     this.connection = connection;
     this.prefix = prefix;
   }
+  async markActionAsUndone(actionId: number, undone: boolean): Promise<void> {
+    this.updateUndoLogTable<Row.Action>("actions", {
+      id: actionId,
+      undone
+    });
+  }
   async insertIntoUndoLogTable<T extends Record<string, any>>(tableName: string, row: T): Promise<void> {
     await this.insertIntoTable<T>(`${this.prefix}${tableName}`, row);
   }
@@ -93,12 +99,22 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
     return row;
   }
 
+  async updateUndoLogTable<T extends Record<string, any> & {id: number}>(tableName: string, data: Partial<T>& {id: number}): Promise<void> {
+    let tail: string[] = [];
+    let parameters = {};
+    Object.getOwnPropertyNames(data).forEach(c => {
+      tail.push(`${c}=$${c}`);
+      parameters = {...parameters, [`$${c}`]: data[c] };
+    });
+    const query = `UPDATE ${this.prefix}${tableName} SET ${tail.join(", ")} WHERE id=$id`;
+    await this.connection.run(query, parameters);
+  }
+
   async updateChannel(channelId: number, status: Row.Channel["status"]) {
-    const parameters = { $channel: channelId, $status: status };
-    await this.connection.run(
-      `UPDATE ${this.prefix}channels SET status=$status WHERE id=$channel`,
-      parameters
-    );
+    await this.updateUndoLogTable<Row.Channel>("channels", {
+      id: channelId,
+      status
+    });
   }
 
   cellToString(value: any) {
@@ -138,8 +154,8 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
 
   async doesTableExist(name: string) {
     const query =
-      "SELECT 1 FROM sqlite_master WHERE type='table' AND name=@name";
-    const parameters = { "@name": name };
+      "SELECT 1 FROM sqlite_master WHERE type='table' AND name=$name";
+    const parameters = { "$name": name };
     const row = await this.connection.getSingle(query, parameters);
     return row != null;
   }

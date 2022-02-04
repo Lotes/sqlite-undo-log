@@ -33,10 +33,9 @@ describe("UndoLogUtils", () => {
 
       // assert
       await assertions.assertTableExists("undo_dummy");
-      await assertions.assertColumnExists("undo_dummy", "id");
-      Object.keys(tables.channels.columns).forEach(async (columnName) => {
+      for (const columnName of Object.keys(tables.changes.columns)) {
         await assertions.assertColumnExists("undo_dummy", columnName);
-      });
+      }
     });
   });
   describe("dropUndoLogTable", () => {

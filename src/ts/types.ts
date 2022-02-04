@@ -65,10 +65,13 @@ export interface PragmaTableInfo {
 }
 
 export interface UndoLogUtils {
-  createTable(tableName: string, tableDef: TableDefinition): Promise<void>;
   createUndoLogTable(tableName: string, definition: TableDefinition): Promise<void>;
   insertIntoUndoLogTable<T extends Record<string, any>>(tableName: string, row: T): Promise<void>;
+  updateUndoLogTable<T extends Record<string, any> & {id: number}>(tableName: string, data: Partial<T>& {id: number}): Promise<void>;
   dropUndoLogTable(tableName: string): Promise<void>;
+  
+  markActionAsUndone(actionId: number, undone: boolean): Promise<void>;
+  createTable(tableName: string, tableDef: TableDefinition): Promise<void>;
   getOrCreateReadyChannel(channel: number): Promise<Row.Channel>;
   doesColumnExist(tableName: string, columnName: string): Promise<boolean>;
   updateChannel(channel: number, status: Row.Channel["status"]): Promise<void>;
