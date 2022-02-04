@@ -11,7 +11,7 @@ export class UndoLogImpl implements UndoLog {
     this.utils = utils; 
   }
   async recordWithin(channelId: number, categoryName: string|undefined, action: () => Promise<void>): Promise<void> {
-    const channel = await this.utils.createChannel(channelId);
+    const channel = await this.utils.getOrCreateReadyChannel(channelId);
     if(channel.status !== "READY") {
       throw new UndoLogError("Forbidden call: undo log must be in status READY for recording actions.");
     }

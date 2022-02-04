@@ -65,16 +65,18 @@ export interface PragmaTableInfo {
 }
 
 export interface UndoLogUtils {
-  doesColumnExist(tableName: string, columnName: string): Promise<boolean>;
   createUndoLogTable(tableName: string, definition: TableDefinition): Promise<void>;
+  insertIntoUndoLogTable<T extends Record<string, any>>(tableName: string, row: T): Promise<void>;
   dropUndoLogTable(tableName: string): Promise<void>;
-  createChannel(channel: number): Promise<Row.Channel>;
+  getOrCreateReadyChannel(channel: number): Promise<Row.Channel>;
+  doesColumnExist(tableName: string, columnName: string): Promise<boolean>;
   updateChannel(channel: number, status: Row.Channel["status"]): Promise<void>;
   cellToString(value: any): string|null;
   insertIntoTable<T extends Record<string, any>>(name: string, row: T): Promise<void>;
   getMetaTable(name: string): Promise<TableColumn[]>;
   doesTableExist(name: string): Promise<boolean>;
   hasTableId(name: string, id: number): Promise<boolean>;
+  tableHas<T extends Record<string, any> & {id: number}>(tableName: string, row: T): Promise<boolean>;
 }
 
 export interface UndoLogSetup {
@@ -102,6 +104,7 @@ export class AssertionError extends Error {
 }
 
 export interface Assertions {
+  assertTableHas<T extends Record<string, any> & {id: number}>(tableName: string, row: T): Promise<void>;
   assertTrue(value: boolean, message: string): void;
   assertFalse(value: boolean, message: string): void;
   assertTableExists(tableName: string): Promise<void>

@@ -8,6 +8,9 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
     this.connection = connection;
     this.prefix = prefix;
   }
+  async insertIntoUndoLogTable<T extends Record<string, any>>(tableName: string, row: T): Promise<void> {
+    await this.insertIntoTable<T>(`${this.prefix}${tableName}`, row);
+  }
   async doesColumnExist(tableName: string, columnName: string): Promise<boolean> {
     const columns = await this.getMetaTable(tableName);
     return columns.findIndex(c => c.name.toLowerCase() === columnName.toLowerCase()) > -1;
@@ -59,7 +62,7 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
     await this.connection.execute(query);
   }
 
-  async createChannel(channel: number) {
+  async getOrCreateReadyChannel(channel: number) {
     const parameters = { $channel: channel };
     await this.connection.run(
       `INSERT OR IGNORE INTO ${this.prefix}channels (id, status) VALUES ($channel, 'READY')`,
@@ -71,11 +74,14 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
     if (row == null) {
       throw new UndoLogError(`Unable to create or get a channel '${channel}'.`);
     }
+    if (row.status !== "READY")  {
+      throw new UndoLogError(`Expected channel '${channel}' to have status 'READY', but was '${row.status}'.`);
+    }
     return row;
   }
 
-  async updateChannel(channel: number, status: Row.Channel["status"]) {
-    const parameters = { $channel: channel, $status: status };
+  async updateChannel(channelId: number, status: Row.Channel["status"]) {
+    const parameters = { $channel: channelId, $status: status };
     await this.connection.run(
       `UPDATE ${this.prefix}channels SET status=$status WHERE id=$channel`,
       parameters
@@ -124,11 +130,17 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
     const row = await this.connection.getSingle(query, parameters);
     return row != null;
   }
-
   async hasTableId(name: string, id: number) {
-    const query = `SELECT 1 FROM ${name} WHERE id=$id`;
-    const parameters = { $id: id };
-    const row = await this.connection.getSingle(query, parameters);
-    return row != null;
+    return await this.tableHas(name, {id});
+  }
+  async tableHas<T extends Record<string, any> & { id: number; }>(tableName: string, row: T): Promise<boolean> {
+    let tail: string[] = [];
+    let parameters = {};
+    Object.getOwnPropertyNames(row).forEach(c => {
+      tail.push(`${c}=$${c}`);
+      parameters = {...parameters, [`$${c}`]: row[c] };
+    });
+    const query = `SELECT 1 AS yes FROM ${tableName} WHERE ${tail.join(" AND ")}`;
+    return await this.connection.getSingle<{yes: boolean}>(query, parameters) != null;
   }
 }

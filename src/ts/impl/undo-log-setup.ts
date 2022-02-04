@@ -22,7 +22,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     }
   }
   async addTable(name: string, channelId: number): Promise<void> {
-    await this.utils.createChannel(channelId);
+    await this.utils.getOrCreateReadyChannel(channelId);
     const tableId = await this.createUndoLogTable(name, channelId);
     const columns = await this.createUndoLogColumns(tableId, name);
     await this.createInsertTrigger(name, columns);

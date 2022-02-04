@@ -41,5 +41,13 @@ export class AssertionsImpl implements Assertions {
       result,
       `Expected table '${tableName}' to have entry with id ${id}, but was not found.`
     );
-  }  
+  }
+  
+  async assertTableHas<T extends Record<string, any> & {id: number}>(tableName: string, row: T) {
+    const result = await this.utils.tableHas(tableName, row);
+    this.assertTrue(
+      result,
+      `Expected table '${tableName}' to have entry with ${JSON.stringify(row)}.`
+    );
+  }
 }
