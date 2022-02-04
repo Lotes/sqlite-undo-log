@@ -1,4 +1,4 @@
-import { UndoLogUtils } from "../types";
+import { Assertions, UndoLogUtils } from "../types";
 
 export class AssertionError extends Error {
   constructor(message: string) {
@@ -6,7 +6,7 @@ export class AssertionError extends Error {
   }
 }
 
-export class Assertions {
+export class AssertionsImpl implements Assertions {
   private debug: boolean;
   private utils: UndoLogUtils;
   constructor(utils: UndoLogUtils, debug: boolean) {

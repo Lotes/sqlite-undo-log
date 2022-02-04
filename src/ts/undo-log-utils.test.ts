@@ -1,9 +1,9 @@
 import { DatabaseImpl } from "./impl/sqlite3";
-import { Connection, Database, UndoLogUtils } from "./types";
-import { Assertions } from "./testing/assertions";
+import { Connection, Database, UndoLogUtils, Assertions } from "./types";
 import path from "path";
 import {promises} from "fs";
 import { UndoLogUtilsImpl } from "./impl/undo-log-utils";
+import { AssertionsImpl } from "./impl/assertions";
 
 let connection: Connection;
 let utils: UndoLogUtils;
@@ -14,8 +14,8 @@ beforeEach(async () => {
   await promises.rm(fileName);
   const database: Database = new DatabaseImpl(fileName);
   connection = await database.connect();
-  utils = new UndoLogUtilsImpl(connection, {debug: true})
-  assertions = new Assertions(utils, true);
+  utils = new UndoLogUtilsImpl(connection);
+  assertions = new AssertionsImpl(utils, true);
 });
 
 describe("UndoLogUtils", () => {

@@ -1,18 +1,14 @@
-import { Connection, UndoLogUtils, UndoLog, UndoLogError, UndoLogOptions } from "../types";
+import { Connection, UndoLogUtils, UndoLog, UndoLogError } from "../types";
 import { Row } from "../tables";
-import { Assertions } from "../testing/assertions";
 
 export class UndoLogImpl implements UndoLog {
   private connection: Connection;
   private prefix: string;
-  private assertions: Assertions;
   private utils: UndoLogUtils;
-  constructor(connection: Connection, utils: UndoLogUtils, options?: UndoLogOptions) {
-    const opts = Object.assign({ debug: false, prefix: "undo_" }, options) 
+  constructor(connection: Connection, utils: UndoLogUtils, prefix: string = "undo_") {
     this.connection = connection;
-    this.prefix = opts.prefix;
+    this.prefix = prefix;
     this.utils = utils; 
-    this.assertions = new Assertions(this.utils, opts.debug);
   }
   async recordWithin(channelId: number, categoryName: string|undefined, action: () => Promise<void>): Promise<void> {
     const channel = await this.utils.createChannel(channelId);

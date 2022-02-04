@@ -64,11 +64,6 @@ export interface PragmaTableInfo {
   pk: number;
 }
 
-export interface UndoLogOptions {
-  debug?: boolean;
-  prefix?: string;
-}
-
 export interface UndoLogUtils {
   createUndoLogTable(tableName: string, definition: TableDefinition): Promise<void>;
   dropUndoLogTable(tableName: string): Promise<void>;
@@ -97,4 +92,18 @@ export class UndoLogError extends Error {
   constructor(message: string) {
     super(message);
   }
+}
+
+export class AssertionError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+export interface Assertions {
+  assertTrue(value: boolean, message: string): void;
+  assertFalse(value: boolean, message: string): void;
+  assertTableExists(tableName: string): Promise<void>
+  assertTableDoesNotExist(tableName: string): Promise<void>;
+  assertTableHasId(tableName: string, id: number): Promise<void>;
 }

@@ -1,13 +1,12 @@
 import { Row } from "../tables";
-import { Connection, TableDefinition, SqliteColumnDefinition, ForeignKey, PragmaTableInfo, TableColumn, UndoLogError, UndoLogOptions, UndoLogUtils } from "../types";
+import { Connection, TableDefinition, SqliteColumnDefinition, ForeignKey, PragmaTableInfo, TableColumn, UndoLogError, UndoLogUtils } from "../types";
 
 export class UndoLogUtilsImpl implements UndoLogUtils {
   private connection: Connection;
   private prefix: string;
-  constructor(connection: Connection, options?: UndoLogOptions) {
-    const opts = Object.assign({ debug: false, prefix: "undo_" }, options);
+  constructor(connection: Connection, prefix: string = "undo_") {
     this.connection = connection;
-    this.prefix = opts.prefix;
+    this.prefix = prefix;
   }
 
   async createUndoLogTable(tableName: string, definition: TableDefinition) {

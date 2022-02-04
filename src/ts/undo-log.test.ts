@@ -1,6 +1,5 @@
 import { DatabaseImpl } from "./impl/sqlite3";
-import { Connection, Database, UndoLog, UndoLogSetup, UndoLogUtils } from "./types";
-import { Assertions } from "./testing/assertions";
+import { Assertions, Connection, Database, UndoLog, UndoLogSetup, UndoLogUtils } from "./types";
 import { AllTypeTable } from "./testing/fixtures";
 import tables, { Row } from "./tables";
 import path from "path";
@@ -8,6 +7,7 @@ import {promises} from "fs";
 import { UndoLogImpl } from "./impl/undo-log";
 import { UndoLogSetupImpl } from "./impl/undo-log-setup";
 import { UndoLogUtilsImpl } from "./impl/undo-log-utils";
+import { AssertionsImpl } from "./impl/assertions";
 
 let connection: Connection;
 let setup: UndoLogSetup;
@@ -20,10 +20,10 @@ beforeEach(async () => {
   await promises.rm(fileName);
   const database: Database = new DatabaseImpl(fileName);
   connection = await database.connect();
-  utils = new UndoLogUtilsImpl(connection, {debug: true})
-  assertions = new Assertions(utils, true);
-  setup = new UndoLogSetupImpl(connection, utils, {debug: true});
-  log = new UndoLogImpl(connection, utils, {debug: true});
+  utils = new UndoLogUtilsImpl(connection)
+  assertions = new AssertionsImpl(utils, true);
+  setup = new UndoLogSetupImpl(connection, utils);
+  log = new UndoLogImpl(connection, utils);
   await setup.install();
 });
 

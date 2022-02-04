@@ -1,18 +1,14 @@
 import tables from "../tables";
-import { Assertions } from "../testing/assertions";
-import { UndoLogUtils, Connection, TableColumn, UndoLogOptions, UndoLogSetup } from "../types";
+import { UndoLogUtils, Connection, TableColumn, UndoLogSetup, Assertions } from "../types";
 
 export class UndoLogSetupImpl implements UndoLogSetup {
   private connection: Connection;
   private prefix: string;
-  private assertions: Assertions;
   private utils: UndoLogUtils;
-  constructor(connection: Connection, utils: UndoLogUtils, options?: UndoLogOptions) {
-    const opts = Object.assign({ debug: false, prefix: "undo_" }, options);
+  constructor(connection: Connection, utils: UndoLogUtils, prefix: string = "undo_") {
     this.connection = connection;
-    this.prefix = opts.prefix;
+    this.prefix = prefix;
     this.utils = utils;
-    this.assertions = new Assertions(this.utils, opts.debug);
   }
   async install(): Promise<void> {
     for (const n of Object.getOwnPropertyNames(tables)) {
