@@ -14,11 +14,14 @@ export class UndoLogImpl implements UndoLog {
     const channel = await this.utils.getOrCreateReadyChannel(channelId);
     const categoryId = await this.getOrCreateCategory(categoryName);
     await this.createNewAction(channel.id, categoryId);
-    await this.utils.updateChannel(channel.id, "RECORDING");
+    await this.doItWhileChannelHasStatus(channel.id, "RECORDING", action);
+  }
+  private async doItWhileChannelHasStatus(channelId: number, status: Row.Channel["status"],  action: () => Promise<void>){
+    await this.utils.updateChannel(channelId, status);
     try{
       await action();
     } finally{
-      await this.utils.updateChannel(channel.id, "READY");
+      await this.utils.updateChannel(channelId, "READY");
     }
   }
   private async createNewAction(channelId: number, categoryId: number|null) {
@@ -57,16 +60,14 @@ export class UndoLogImpl implements UndoLog {
     return null;
   }
   async undo(channelId: number): Promise<void> {
+    await this.utils.getOrCreateReadyChannel(channelId);
     const query = `SELECT a.* FROM ${this.prefix}channels ch LEFT JOIN ${this.prefix}actions a ON a.channel_id=ch.id WHERE ch.id=$channel ORDER BY a.order_index DESC LIMIT 1`;
     const parameters = {$channel: channelId};
     const row = await this.connection.getSingle<Row.Action>(query, parameters);
-    if(row == null) {
-      throw new UndoLogError(`No channel '${channelId}' known!`);
-    }
-    if(row.id == null) {
+    if(row?.id == null) {
       throw new UndoLogError(`Channel '${channelId}' is at the bottom of the action stack.`);
     }
-    await this.undoAction(row);
+    await this.doItWhileChannelHasStatus(channelId, "UNDOING", () => this.undoAction(row));
   }
   private async undoAction(action: Row.Action) {
     const query = `SELECT * FROM ${this.prefix}changes ch WHERE ch.action_id=$actionId ORDER BY ch.order_index DESC`;

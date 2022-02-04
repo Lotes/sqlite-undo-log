@@ -5,7 +5,11 @@ export class UndoLogSetupImpl implements UndoLogSetup {
   private connection: Connection;
   private prefix: string;
   private utils: UndoLogUtils;
-  constructor(connection: Connection, utils: UndoLogUtils, prefix: string = "undo_") {
+  constructor(
+    connection: Connection,
+    utils: UndoLogUtils,
+    prefix: string = "undo_"
+  ) {
     this.connection = connection;
     this.prefix = prefix;
     this.utils = utils;
