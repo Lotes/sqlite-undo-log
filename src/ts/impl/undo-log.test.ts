@@ -61,7 +61,7 @@ test("insertion works", async () => {
 
 test("undo of insertion works", async () => {
   // arrange
-  await utils.createUndoLogTable("all_types", AllTypeTable.Definition);
+  await utils.createTable("all_types", AllTypeTable.Definition);
   await setup.addTable("all_types", 0);
   await log.recordWithin(0, undefined, async () =>   {
     await utils.insertIntoTable("all_types", AllTypeTable.Values[0]);

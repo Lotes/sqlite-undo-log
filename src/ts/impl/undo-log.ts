@@ -57,7 +57,7 @@ export class UndoLogImpl implements UndoLog {
     return null;
   }
   async undo(channelId: number): Promise<void> {
-    const query = `SELECT a.* FROM ${this.prefix}channels ch LEFT JOIN ${this.prefix}actions a ON a.id=ch.action_id WHERE ch.id=$channel`;
+    const query = `SELECT a.* FROM ${this.prefix}channels ch LEFT JOIN ${this.prefix}actions a ON a.channel_id=ch.id WHERE ch.id=$channel ORDER BY a.order_index DESC LIMIT 1`;
     const parameters = {$channel: channelId};
     const row = await this.connection.getSingle<Row.Action>(query, parameters);
     if(row == null) {

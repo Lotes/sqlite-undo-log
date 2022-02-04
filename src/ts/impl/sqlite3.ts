@@ -54,7 +54,7 @@ export class ConnectionImpl implements Connection {
     });
   }
   private track(query: string, parameters: Parameters = {}) {
-    const where = new Error().stack?.split("\n")[2];
+    const where = new Error().stack?.split("\n")[3];
     console.error({query, parameters, where});
   }
 }
