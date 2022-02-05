@@ -92,9 +92,9 @@ export class UndoLogImpl implements UndoLog {
     }
   }
   private async undoInsertion(table: Row.Table, change: Row.Change) {
-    const run = await this.connection.run(`DELETE FROM ${table.name} WHERE rowid=$rowId`, {$rowId: change.row_id});
+    const run = await this.connection.run(`DELETE FROM ${table.name} WHERE rowid=$rowId`, {$rowId: change.new_row_id});
     if(run.changes == null || run.changes === 0) {
-      throw new UndoLogError(`Unable to delete rowid=${change.row_id} in table '${table.name}'.`);
+      throw new UndoLogError(`Unable to delete rowid=${change.new_row_id} in table '${table.name}'.`);
     }
   }
   private async undoDeletion(table: Row.Table, change: Row.Change) {
@@ -105,9 +105,9 @@ export class UndoLogImpl implements UndoLog {
   }
   private async undoUpdate(table: Row.Table, change: Row.Change) {
     const values = await this.getValues(change, "old");
-    let record = {};
+    let record = {rowid: change.old_row_id};
     values.forEach(v => record = {...record, [v.name]: v.value});
-    await this.utils.updateTable(table.name, change.row_id, record);
+    await this.utils.updateTable(table.name, change.new_row_id, record);
   }
   private async getValues(change: Row.Change, which:"old"|"new") {
     const query = `

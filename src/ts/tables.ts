@@ -94,7 +94,8 @@ namespace Changes {
     columns: {
       id: "INTEGER",
       table_id: { type: "INTEGER", canBeNull: false },
-      row_id: { type: "INTEGER", canBeNull: false },
+      old_row_id: { type: "INTEGER", canBeNull: true },
+      new_row_id: { type: "INTEGER", canBeNull: true },
       action_id: { type: "INTEGER", canBeNull: false },
       order_index: { type: "INTEGER", canBeNull: false },
       type: {
@@ -119,7 +120,8 @@ namespace Changes {
 
   export interface Row {
     id: number;
-    row_id: number;
+    old_row_id: number;
+    new_row_id: number;
     action_id: number;
     table_id: number;
     order_id: number;

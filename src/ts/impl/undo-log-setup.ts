@@ -75,8 +75,8 @@ export class UndoLogSetupImpl implements UndoLogSetup {
 
   private async createTrigger(type: ChangeType, tableName: string, columns: TableColumn[]) {
     const queryAddChange = (recordOld: boolean, recordNew: boolean) => `
-      INSERT INTO ${this.prefix}changes (type, row_id, action_id, order_index, table_id)
-      SELECT ${this.connection.escapeString(type)}, ${recordOld?"OLD":"NEW"}.rowid, a.id, MAX(IFNULL(c.order_index,0))+1, t.id
+      INSERT INTO ${this.prefix}changes (type, old_row_id, new_row_id, action_id, order_index, table_id)
+      SELECT ${this.connection.escapeString(type)}, ${recordOld?"OLD.rowid":"NULL"}, ${recordNew?"NEW.rowid":"NULL"}, a.id, MAX(IFNULL(c.order_index,0))+1, t.id
       FROM ${this.prefix}tables t
         INNER JOIN ${this.prefix}channels ch ON t.channel_id=ch.id
         INNER JOIN ${this.prefix}actions a ON a.channel_id=ch.id
