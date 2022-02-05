@@ -1,4 +1,4 @@
-import { Connection, UndoLogUtils, UndoLog, UndoLogError } from "../types";
+import { Connection, UndoLogUtils, UndoLog, UndoLogError, NameValuePair } from "../types";
 import { Row } from "../tables";
 
 export class UndoLogImpl implements UndoLog {
@@ -79,20 +79,43 @@ export class UndoLogImpl implements UndoLog {
     await this.utils.markActionAsUndone(action.id, true);
   }
   private async undoChange(change: Row.Change) {
-    switch(change.type) {
-      case "INSERT": await this.undoInsertion(change.table_id, change.row_id); 
-    }
-  }
-  private async undoInsertion(tableId: number, rowId: number) {
     const query = `SELECT * FROM ${this.prefix}tables WHERE id=$id`;
-    const parameters = {$id:tableId};
+    const parameters = {$id:change.table_id};
     const table = await this.connection.getSingle<Row.Table>(query, parameters);
     if(table == null) {
-      throw new UndoLogError(`Unknown table with id '${tableId}'.`);
+      throw new UndoLogError(`Unknown table with id '${change.table_id}'.`);
     }
-    const run = await this.connection.run(`DELETE FROM ${table.name} WHERE rowid=$rowId`, {$rowId: rowId});
+    switch(change.type) {
+      case "INSERT": await this.undoInsertion(table, change); break;
+      case "DELETE": await this.undoDeletion(table, change); break;
+      case "UPDATE": await this.undoUpdate(table, change); break;
+    }
+  }
+  private async undoInsertion(table: Row.Table, change: Row.Change) {
+    const run = await this.connection.run(`DELETE FROM ${table.name} WHERE rowid=$rowId`, {$rowId: change.row_id});
     if(run.changes == null || run.changes === 0) {
-      throw new UndoLogError(`Unable to delete rowid=${rowId} in table '${table.name}'.`);
+      throw new UndoLogError(`Unable to delete rowid=${change.row_id} in table '${table.name}'.`);
     }
+  }
+  private async undoDeletion(table: Row.Table, change: Row.Change) {
+    const values = await this.getValues(change, "old");
+    let record = {};
+    values.forEach(v => record = {...record, [v.name]: v.value});
+    await this.utils.insertIntoTable(table.name, record);
+  }
+  private async undoUpdate(table: Row.Table, change: Row.Change) {
+    const values = await this.getValues(change, "old");
+    let record = {};
+    values.forEach(v => record = {...record, [v.name]: v.value});
+    await this.utils.updateTable(table.name, change.row_id, record);
+  }
+  private async getValues(change: Row.Change, which:"old"|"new") {
+    const query = `
+      SELECT c.name, v.${which}_value AS value
+      FROM ${this.prefix}values v INNER JOIN ${this.prefix}columns c ON v.column_id=c.id
+      WHERE v.change_id=$changeId
+    `;
+    const parameters = {$changeId: change.id};
+    return await this.connection.getAll<NameValuePair>(query, parameters);
   }
 }

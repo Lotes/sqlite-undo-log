@@ -1,5 +1,5 @@
 import tables from "../tables";
-import { UndoLogUtils, Connection, TableColumn, UndoLogSetup } from "../types";
+import { UndoLogUtils, Connection, TableColumn, UndoLogSetup, ChangeType } from "../types";
 
 export class UndoLogSetupImpl implements UndoLogSetup {
   private connection: Connection;
@@ -20,7 +20,6 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     }
   }
   async uninstall(): Promise<void> {
-    //TODO drop triggers
     for (const n of Object.getOwnPropertyNames(tables).reverse()) {
       await this.utils.dropUndoLogTable(`${n}`);
     }
@@ -29,7 +28,9 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     await this.utils.getOrCreateReadyChannel(channelId);
     const tableId = await this.createUndoLogTable(name, channelId);
     const columns = await this.createUndoLogColumns(tableId, name);
-    await this.createInsertTrigger(name, columns);
+    await this.createTrigger("INSERT", name, columns);
+    await this.createTrigger("UPDATE", name, columns);
+    await this.createTrigger("DELETE", name, columns);
   }
   private async createUndoLogColumns(tableId: number, tableName: string) {
     const columns = await this.utils.getMetaTable(tableName);
@@ -72,39 +73,36 @@ export class UndoLogSetupImpl implements UndoLogSetup {
       `;
   }
 
-  private async createInsertTrigger(name: string, columns: TableColumn[]) {
-    const query = `
-    CREATE TRIGGER ${this.prefix}log_insertion_${name}_trigger
-      AFTER INSERT ON ${name}
-      FOR EACH ROW
-      WHEN (${this.queryIsTablesChannelStatusEqRecording(name)})
-    BEGIN
-      INSERT INTO ${this.prefix}changes
-              (type,     row_id,    action_id,    order_index,                    table_id)
-        SELECT 
-          'INSERT',
-          NEW.rowid,
-          a.id,
-          MAX(IFNULL(c.order_index,0))+1,
-          t.id
-        FROM ${this.prefix}tables t
-          INNER JOIN ${this.prefix}channels ch ON t.channel_id=ch.id
-          INNER JOIN ${this.prefix}actions a ON a.channel_id=ch.id
-          LEFT JOIN ${this.prefix}changes c ON a.id=c.action_id
-        WHERE t.name=${this.connection.escapeString(name)}
-          AND a.order_index=(
-            SELECT MAX(ma.order_index)
-            FROM undo_actions ma
-            WHERE ma.channel_id=ch.id
-          )
-        GROUP BY a.id;
-  
-      INSERT INTO ${this.prefix}values (column_id, change_id, new_value)
-        ${columns
-          .map((c) => `SELECT ${c.id}, last_insert_rowid(), NEW.${c.name}`)
-          .join("\r\n      UNION ")};
-    END;`;
-    await this.connection.execute(query);
+  private async createTrigger(type: ChangeType, tableName: string, columns: TableColumn[]) {
+    const queryAddChange = (recordOld: boolean, recordNew: boolean) => `
+      INSERT INTO ${this.prefix}changes (type, row_id, action_id, order_index, table_id)
+      SELECT ${this.connection.escapeString(type)}, ${recordOld?"OLD":"NEW"}.rowid, a.id, MAX(IFNULL(c.order_index,0))+1, t.id
+      FROM ${this.prefix}tables t
+        INNER JOIN ${this.prefix}channels ch ON t.channel_id=ch.id
+        INNER JOIN ${this.prefix}actions a ON a.channel_id=ch.id
+        LEFT JOIN ${this.prefix}changes c ON a.id=c.action_id
+      WHERE t.name=${this.connection.escapeString(tableName)}
+        AND a.order_index=(
+          SELECT MAX(ma.order_index)
+          FROM undo_actions ma
+          WHERE ma.channel_id=ch.id
+        )
+      GROUP BY a.id;
+    `;
+    const queryAddValues = (recordOld: boolean, recordNew: boolean) => `
+      INSERT INTO ${this.prefix}values (column_id, change_id${recordOld ? ", old_value" : ""}${recordNew ? ", new_value" : ""})
+      ${columns.map((c) => `SELECT ${c.id}, last_insert_rowid()${recordOld ? `, quote(OLD.${c.name})` : ""}${recordNew ? `, quote(NEW.${c.name})`: ""}`).join(" UNION ")};
+    `;
+    const queryTrigger = `
+      CREATE TRIGGER after_${type.toLowerCase()}_${tableName}_trigger
+        AFTER ${type} ON ${tableName}
+        FOR EACH ROW
+        WHEN (${this.queryIsTablesChannelStatusEqRecording(tableName)})
+      BEGIN
+        ${queryAddChange(type !== "INSERT", type !== "DELETE")}
+        ${queryAddValues(type !== "INSERT", type !== "DELETE")}
+      END;`;
+    await this.connection.execute(queryTrigger);
   }
   async removeTable(name: string): Promise<void> {
     await this.connection.run(

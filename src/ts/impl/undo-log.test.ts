@@ -45,11 +45,11 @@ test("insertion works", async () => {
   // assert
   const rows = await connection.getAll("SELECT column_id, new_value FROM undo_values");
   expect(rows).toEqual([
-    {column_id: 0, new_value: 1},
-    {column_id: 1, new_value: 'one'},
-    {column_id: 2, new_value: 1},
-    {column_id: 3, new_value: 'juan'},
-    {column_id: 4, new_value: 0},
+    {column_id: 0, new_value: "1"},
+    {column_id: 1, new_value: "'one'"},
+    {column_id: 2, new_value: "1"},
+    {column_id: 3, new_value: "'juan'"},
+    {column_id: 4, new_value: "0.0"},
   ]);
 
   const actions = await connection.getAll<Row.Action>("SELECT * FROM undo_actions");

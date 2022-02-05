@@ -1,4 +1,4 @@
-import { ChannelStatus, TableDefinition } from "./types";
+import { ChangeType, ChannelStatus, TableDefinition } from "./types";
 
 namespace Channels {
   export const TableDef: TableDefinition = {
@@ -123,7 +123,7 @@ namespace Changes {
     action_id: number;
     table_id: number;
     order_id: number;
-    type: "INSERT" | "DELETE" | "UPDATE";
+    type: ChangeType;
   }
 }
 
@@ -208,11 +208,11 @@ namespace Values {
         canBeNull: false,
       },
       old_value: {
-        type: "BLOB",
+        type: "TEXT",
         canBeNull: true,
       },
       new_value: {
-        type: "BLOB",
+        type: "TEXT",
         canBeNull: true,
       },
     },

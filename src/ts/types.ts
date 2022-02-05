@@ -67,8 +67,10 @@ export interface UndoLogUtils {
   updateUndoLogTable<T extends Record<string, any> & {id: number}>(tableName: string, data: Partial<T>& {id: number}): Promise<void>;
   dropUndoLogTable(tableName: string): Promise<void>;
   
-  markActionAsUndone(actionId: number, undone: boolean): Promise<void>;
   createTable(tableName: string, tableDef: TableDefinition): Promise<void>;
+  updateTable<T extends Record<string, any>>(tableName: string, rowid: number, data: Partial<T>): Promise<void>;
+  
+  markActionAsUndone(actionId: number, undone: boolean): Promise<void>;
   getOrCreateReadyChannel(channel: number): Promise<void>;
   doesColumnExist(tableName: string, columnName: string): Promise<boolean>;
   updateChannel(channel: number, status: ChannelStatus): Promise<void>;
@@ -113,3 +115,10 @@ export interface Assertions {
   assertTableDoesNotExist(tableName: string): Promise<void>;
   assertTableHasId(tableName: string, id: number): Promise<void>;
 }
+
+export interface NameValuePair {
+  name: string;
+  value: string;
+}
+
+export type ChangeType = "INSERT"|"DELETE"|"UPDATE";

@@ -76,6 +76,17 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
     await this.connection.execute(query);
   }
 
+  async updateTable<T extends Record<string, any>>(tableName: string, rowId: number, data: Partial<T>): Promise<void> {
+    let tail: string[] = [];
+    let parameters = {$rowid: rowId};
+    Object.getOwnPropertyNames(data).forEach(c => {
+      tail.push(`${c}=$${c}`);
+      parameters = {...parameters, [`$${c}`]: data[c] };
+    });
+    const query = `UPDATE ${this.prefix}${tableName} SET ${tail.join(", ")} WHERE rowid=$rowid`;
+    await this.connection.run(query, parameters);
+  }
+
   async dropUndoLogTable(tableName: string) {
     const query = `DROP TABLE ${this.prefix}${tableName}`;
     await this.connection.execute(query);

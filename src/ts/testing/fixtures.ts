@@ -12,11 +12,11 @@ export namespace AllTypeTable {
         }        
     };
     export interface Row {
-        id: number,
-        name: string,
-        num: number,
-        blob: Buffer,
-        zero: number
+        id: number;
+        name: string;
+        num: number;
+        blob: Buffer;
+        zero: number;
     }
     export const Values: Row[] = [
         {
