@@ -4,7 +4,7 @@ import path from "path";
 import { promises } from "fs";
 import { UndoLogUtilsImpl } from "./undo-log-utils";
 import { AssertionsImpl } from "./assertions";
-import tables, { Row } from "../tables";
+import tables, { Channel } from "../tables";
 
 let connection: Connection;
 let utils: UndoLogUtils;
@@ -54,7 +54,7 @@ describe("UndoLogUtils", () => {
     test("channel already exists, wrong state", async () => {
       // arrange
       await utils.createUndoLogTable("channels", tables.channels);
-      await utils.insertIntoUndoLogTable<Row.Channel>("channels", {
+      await utils.insertIntoUndoLogTable<Channel>("channels", {
         id: 12345,
         status: "RECORDING",
       });
@@ -69,7 +69,7 @@ describe("UndoLogUtils", () => {
     test("channel already exists, correct state", async () => {
       // arrange
       await utils.createUndoLogTable("channels", tables.channels);
-      await utils.insertIntoUndoLogTable<Row.Channel>("channels", {
+      await utils.insertIntoUndoLogTable<Channel>("channels", {
         id: 12345,
         status: "READY",
       });
@@ -103,7 +103,7 @@ describe("UndoLogUtils", () => {
     test("updates existing channel", async () => {
       // arrange
       await utils.createUndoLogTable("channels", tables.channels);
-      await utils.insertIntoUndoLogTable<Row.Channel>("channels", {
+      await utils.insertIntoUndoLogTable<Channel>("channels", {
         id: 999,
         status: "RECORDING"
       });
@@ -112,7 +112,7 @@ describe("UndoLogUtils", () => {
       await utils.updateChannel(999, "REDOING");
 
       // assert
-      await assertions.assertTableHas<Row.Channel>("undo_channels", {
+      await assertions.assertTableHas<Channel>("undo_channels", {
         id: 999,
         status: "REDOING"
       });

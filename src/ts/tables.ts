@@ -251,12 +251,11 @@ export default {
   values: Values.TableDef,
 } as Record<string, TableDefinition>;
 
-export namespace Row {
-  export type Category = Categories.Row;
-  export type Action = Actions.Row;
-  export type Change = Changes.Row;
-  export type Channel = Channels.Row;
-  export type Table = Tables.Row;
-  export type Column = Columns.Row;
-  export type Value = Values.Row;
-}
+
+export type Category = Categories.Row;
+export type Action = Actions.Row;
+export type Change = Changes.Row;
+export type Channel = Channels.Row;
+export type Table = Tables.Row;
+export type Column = Columns.Row;
+export type Value = Values.Row;

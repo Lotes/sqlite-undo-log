@@ -1,5 +1,5 @@
 import { Connection, UndoLogUtils, UndoLog, UndoLogError, NameValuePair } from "../types";
-import { Row } from "../tables";
+import { Action, Category, Change, Channel, Table } from "../tables";
 
 export class UndoLogImpl implements UndoLog {
   private connection: Connection;
@@ -16,7 +16,7 @@ export class UndoLogImpl implements UndoLog {
     await this.createNewAction(channelId, categoryId);
     await this.doItWhileChannelHasStatus(channelId, "RECORDING", action);
   }
-  private async doItWhileChannelHasStatus(channelId: number, status: Row.Channel["status"],  action: () => Promise<void>){
+  private async doItWhileChannelHasStatus(channelId: number, status: Channel["status"],  action: () => Promise<void>){
     await this.utils.updateChannel(channelId, status);
     try{
       await action();
@@ -51,7 +51,7 @@ export class UndoLogImpl implements UndoLog {
         `INSERT OR IGNORE INTO ${this.prefix}categories (name) VALUES ($name)`,
         parameters
       );
-      const row = await this.connection.getSingle<Row.Category>(
+      const row = await this.connection.getSingle<Category>(
         `SELECT id FROM ${this.prefix}categories WHERE name=$name`,
         parameters
       );
@@ -63,25 +63,25 @@ export class UndoLogImpl implements UndoLog {
     await this.utils.getOrCreateReadyChannel(channelId);
     const query = `SELECT a.* FROM ${this.prefix}channels ch LEFT JOIN ${this.prefix}actions a ON a.channel_id=ch.id WHERE ch.id=$channel ORDER BY a.order_index DESC LIMIT 1`;
     const parameters = {$channel: channelId};
-    const row = await this.connection.getSingle<Row.Action>(query, parameters);
+    const row = await this.connection.getSingle<Action>(query, parameters);
     if(row?.id == null) {
       throw new UndoLogError(`Channel '${channelId}' is at the bottom of the action stack.`);
     }
     await this.doItWhileChannelHasStatus(channelId, "UNDOING", () => this.undoAction(row));
   }
-  private async undoAction(action: Row.Action) {
+  private async undoAction(action: Action) {
     const query = `SELECT * FROM ${this.prefix}changes ch WHERE ch.action_id=$actionId ORDER BY ch.order_index DESC`;
     const parameters = {$actionId:action.id};
-    const changes = await this.connection.getAll<Row.Change>(query, parameters);
+    const changes = await this.connection.getAll<Change>(query, parameters);
     for(const change of changes) {
       await this.undoChange(change);
     }
     await this.utils.markActionAsUndone(action.id, true);
   }
-  private async undoChange(change: Row.Change) {
+  private async undoChange(change: Change) {
     const query = `SELECT * FROM ${this.prefix}tables WHERE id=$id`;
     const parameters = {$id:change.table_id};
-    const table = await this.connection.getSingle<Row.Table>(query, parameters);
+    const table = await this.connection.getSingle<Table>(query, parameters);
     if(table == null) {
       throw new UndoLogError(`Unknown table with id '${change.table_id}'.`);
     }
@@ -91,25 +91,25 @@ export class UndoLogImpl implements UndoLog {
       case "UPDATE": await this.undoUpdate(table, change); break;
     }
   }
-  private async undoInsertion(table: Row.Table, change: Row.Change) {
+  private async undoInsertion(table: Table, change: Change) {
     const run = await this.connection.run(`DELETE FROM ${table.name} WHERE rowid=$rowId`, {$rowId: change.new_row_id});
     if(run.changes == null || run.changes === 0) {
       throw new UndoLogError(`Unable to delete rowid=${change.new_row_id} in table '${table.name}'.`);
     }
   }
-  private async undoDeletion(table: Row.Table, change: Row.Change) {
+  private async undoDeletion(table: Table, change: Change) {
     const values = await this.getValues(change, "old");
     let record = {};
     values.forEach(v => record = {...record, [v.name]: v.value});
     await this.utils.insertIntoTable(table.name, record);
   }
-  private async undoUpdate(table: Row.Table, change: Row.Change) {
+  private async undoUpdate(table: Table, change: Change) {
     const values = await this.getValues(change, "old");
     let record = {rowid: change.old_row_id};
     values.forEach(v => record = {...record, [v.name]: v.value});
     await this.utils.updateTable(table.name, change.new_row_id, record);
   }
-  private async getValues(change: Row.Change, which:"old"|"new") {
+  private async getValues(change: Change, which:"old"|"new") {
     const query = `
       SELECT c.name, v.${which}_value AS value
       FROM ${this.prefix}values v INNER JOIN ${this.prefix}columns c ON v.column_id=c.id

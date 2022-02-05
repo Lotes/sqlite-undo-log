@@ -1,4 +1,4 @@
-import { Row } from "../tables";
+import { Action, Channel } from "../tables";
 import { Connection, TableDefinition, SqliteColumnDefinition, ForeignKey, PragmaTableInfo, TableColumn, UndoLogError, UndoLogUtils, ChannelStatus } from "../types";
 
 export class UndoLogUtilsImpl implements UndoLogUtils {
@@ -9,7 +9,7 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
     this.prefix = prefix;
   }
   async markActionAsUndone(actionId: number, undone: boolean): Promise<void> {
-    this.updateUndoLogTable<Row.Action>("actions", {
+    this.updateUndoLogTable<Action>("actions", {
       id: actionId,
       undone
     });
@@ -98,7 +98,7 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
       `INSERT OR IGNORE INTO ${this.prefix}channels (id, status) VALUES ($channel, 'READY')`,
       parameters
     );
-    const row = await this.connection.getSingle<Row.Channel>(
+    const row = await this.connection.getSingle<Channel>(
       `SELECT * FROM ${this.prefix}channels`
     );
     if (row == null) {
@@ -121,7 +121,7 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
   }
 
   async updateChannel(channelId: number, status: ChannelStatus) {
-    await this.updateUndoLogTable<Row.Channel>("channels", {
+    await this.updateUndoLogTable<Channel>("channels", {
       id: channelId,
       status
     });

@@ -1,7 +1,7 @@
 import { DatabaseImpl } from "./sqlite3";
 import { Assertions, Connection, Database, UndoLog, UndoLogSetup, UndoLogUtils } from "../types";
 import { AllTypeTable } from "../testing/fixtures";
-import tables, { Row } from "../tables";
+import tables, { Action, Change } from "../tables";
 import path from "path";
 import {promises} from "fs";
 import { UndoLogImpl } from "./undo-log";
@@ -52,10 +52,10 @@ test("insertion works", async () => {
     {column_id: 4, new_value: "0.0"},
   ]);
 
-  const actions = await connection.getAll<Row.Action>("SELECT * FROM undo_actions");
+  const actions = await connection.getAll<Action>("SELECT * FROM undo_actions");
   expect(actions.length).toBe(1);
 
-  const changes = await connection.getAll<Row.Change>("SELECT * FROM undo_changes");
+  const changes = await connection.getAll<Change>("SELECT * FROM undo_changes");
   expect(changes.length).toBe(1);
 });
 
