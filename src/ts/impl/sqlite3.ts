@@ -6,6 +6,16 @@ export class ConnectionImpl implements Connection {
   constructor(db: sqlite.Database){
     this.db = db;
   }
+  close(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      this.db.close((err) => {
+        if(err != null) {
+          return reject(err);
+        }
+        return resolve();
+      });
+    });
+  }
   escapeString(str: string): string {
     return `'${str.replace(/\'/g,"''")}'`;
   }

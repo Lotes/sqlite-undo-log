@@ -1,28 +1,20 @@
-import { DatabaseImpl } from "./sqlite3";
-import { Connection, Database, UndoLogUtils, Assertions } from "../types";
-import path from "path";
-import { promises } from "fs";
-import { UndoLogUtilsImpl } from "./undo-log-utils";
-import { AssertionsImpl } from "./assertions";
+import { Connection, UndoLogUtils, Assertions } from "../types";
 import tables, { Channel } from "../tables";
-
-let connection: Connection;
-let utils: UndoLogUtils;
-let assertions: Assertions;
-
-beforeEach(async () => {
-  const fileName = path.join(
-    "output",
-    expect.getState().currentTestName.replace(/\s+/g, "_") + ".sqlite3"
-  );
-  await promises.rm(fileName, { force: true });
-  const database: Database = new DatabaseImpl(fileName);
-  connection = await database.connect();
-  utils = new UndoLogUtilsImpl(connection);
-  assertions = new AssertionsImpl(utils);
-});
+import { setupBeforeEach } from "./fixtures";
 
 describe("UndoLogUtils", () => {
+  let connection: Connection;
+  let utils: UndoLogUtils;
+  let assertions: Assertions;
+
+  beforeEach(async () => {
+    ({ assertions, utils, connection } = await setupBeforeEach());
+  });
+
+  afterEach(async () => {
+    connection.close();
+  });
+    
   describe("createUndoLogTable", () => {
     test("table gets created", async () => {
       // arrange
@@ -105,16 +97,16 @@ describe("UndoLogUtils", () => {
       await utils.createUndoLogTable("channels", tables.channels);
       await utils.insertIntoUndoLogTable<Channel>("channels", {
         id: 999,
-        status: "RECORDING"
+        status: "RECORDING",
       });
-      
+
       // act
       await utils.updateChannel(999, "REDOING");
 
       // assert
       await assertions.assertTableHas<Channel>("undo_channels", {
         id: 999,
-        status: "REDOING"
+        status: "REDOING",
       });
     });
   });

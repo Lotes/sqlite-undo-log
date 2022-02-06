@@ -30,6 +30,7 @@ export interface RunResult {
 }
 
 export interface Connection {
+  close(): Promise<void>;
   escapeString(str: string): string;
   execute(query: string): Promise<void>;
   run(query: string, parameters?: Parameters): Promise<RunResult>;
