@@ -17,6 +17,7 @@ export interface TableForeignKeys {
   [name: string]: ForeignKey;
 }
 export interface TableDefinition {
+  name: string;
   primaryKey: string[];
   columns: TableColumns;
   uniques?: string[][];

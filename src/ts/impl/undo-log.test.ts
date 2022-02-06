@@ -6,7 +6,7 @@ import {
   UndoLogUtils,
 } from "../types";
 import { AllTypeTable, setupBeforeEach } from "./fixtures";
-import tables, { Action, Change } from "../tables";
+import { tables, Action, Change } from "../tables";
 
 describe("UndoLog", () => {
   let connection: Connection;
@@ -26,7 +26,7 @@ describe("UndoLog", () => {
   });
 
   test("all tables are ready", async () => {
-    const expected = Object.getOwnPropertyNames(tables);
+    const expected = tables.map(t => t.name);
     const actual = await Promise.all(
       expected.map(async (name) =>
         (await utils.doesTableExist("undo_" + name)) ? name : null

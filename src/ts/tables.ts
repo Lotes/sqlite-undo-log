@@ -1,261 +1,240 @@
 import { ChangeType, ChannelStatus, TableDefinition } from "./types";
 
-namespace Channels {
-  export const TableDef: TableDefinition = {
-    primaryKey: ["id"],
-    columns: {
-      id: "INTEGER",
-      status: {
-        type: "TEXT",
-        canBeNull: false,
-        check: "status IN ('READY','RECORDING','UNDOING','REDOING')"
-      }
-    }
-  };
+export const Channels: TableDefinition = {
+  name: "channels",
+  primaryKey: ["id"],
+  columns: {
+    id: "INTEGER",
+    status: {
+      type: "TEXT",
+      canBeNull: false,
+      check: "status IN ('READY','RECORDING','UNDOING','REDOING')",
+    },
+  },
+};
 
-  export interface Row {
-    id: number;
-    status: ChannelStatus;
-  }
+export interface Channel {
+  id: number;
+  status: ChannelStatus;
+}
+export const Categories: TableDefinition = {
+  name: "categories",
+  primaryKey: ["id"],
+  columns: {
+    id: "INTEGER",
+    name: {
+      type: "TEXT",
+      canBeNull: false,
+    },
+  },
+  uniques: [["name"]],
+};
+export interface Category {
+  id: number;
+  name: string;
+}
+export const Actions: TableDefinition = {
+  name: "actions",
+  primaryKey: ["id"],
+  columns: {
+    id: "INTEGER",
+    created_at: {
+      type: "TEXT",
+      canBeNull: false,
+    },
+    order_index: {
+      type: "INTEGER",
+      canBeNull: false,
+    },
+    undone: {
+      type: "INTEGER",
+      canBeNull: false,
+      check: "undone IN (0, 1)",
+    },
+    category_id: {
+      type: "INTEGER",
+      canBeNull: true,
+    },
+    channel_id: {
+      type: "INTEGER",
+      canBeNull: false,
+    },
+  },
+  foreignKeys: {
+    category_id: {
+      referencedTable: "categories",
+      column: "id",
+      onDelete: "SET_NULL",
+    },
+    channel_id: {
+      referencedTable: "channels",
+      column: "id",
+      onDelete: "CASCADE",
+    },
+  },
+};
+
+export interface Action {
+  id: number;
+  created_at: string;
+  category_id: number | null;
+  channel_id: number;
+  order_index: number;
+  undone: boolean;
 }
 
-namespace Categories {
-  export const TableDef: TableDefinition = {
-    primaryKey: ["id"],
-    columns: {
-      id: "INTEGER",
-      name: {
-        type: "TEXT",
-        canBeNull: false,
-      },
+export const Changes: TableDefinition = {
+  name: "changes",
+  primaryKey: ["id"],
+  columns: {
+    id: "INTEGER",
+    table_id: { type: "INTEGER", canBeNull: false },
+    old_row_id: { type: "INTEGER", canBeNull: true },
+    new_row_id: { type: "INTEGER", canBeNull: true },
+    action_id: { type: "INTEGER", canBeNull: false },
+    order_index: { type: "INTEGER", canBeNull: false },
+    type: {
+      type: "TEXT",
+      canBeNull: false,
+      check: "type IN ('INSERT','DELETE','UPDATE')",
     },
-    uniques: [["name"]],
-  };
-  export interface Row {
-    id: number;
-    name: string;
-  }
+  },
+  foreignKeys: {
+    action_id: {
+      referencedTable: "actions",
+      column: "id",
+      onDelete: "CASCADE",
+    },
+    table_id: {
+      referencedTable: "tables",
+      column: "id",
+      onDelete: "CASCADE",
+    },
+  },
+};
+
+export interface Change {
+  id: number;
+  old_row_id: number;
+  new_row_id: number;
+  action_id: number;
+  table_id: number;
+  order_id: number;
+  type: ChangeType;
+}
+export const Tables: TableDefinition = {
+  name: "tables",
+  primaryKey: ["id"],
+  columns: {
+    id: "INTEGER",
+    name: {
+      type: "TEXT",
+      canBeNull: false,
+    },
+    channel_id: {
+      type: "INTEGER",
+      canBeNull: false,
+    },
+  },
+  uniques: [["name"]],
+  foreignKeys: {
+    channel_id: {
+      referencedTable: "channels",
+      column: "id",
+      onDelete: "CASCADE",
+    },
+  },
+};
+
+export interface Table {
+  id: number;
+  name: string;
+  channel_id: number;
+}
+export const Columns: TableDefinition = {
+  name: "columns",
+  primaryKey: ["id"],
+  columns: {
+    id: "INTEGER",
+    name: {
+      type: "TEXT",
+      canBeNull: false,
+    },
+    type: {
+      type: "TEXT",
+      canBeNull: false,
+    },
+    table_id: {
+      type: "INTEGER",
+      canBeNull: false,
+    },
+  },
+  uniques: [["table_id", "name"]],
+  foreignKeys: {
+    table_id: {
+      referencedTable: "tables",
+      column: "id",
+      onDelete: "CASCADE",
+    },
+  },
+};
+
+export interface Column {
+  id: number;
+  name: string;
+  type: string;
+  table_id: number;
+}
+export const Values: TableDefinition = {
+  name: "values",
+  primaryKey: ["id"],
+  columns: {
+    id: "INTEGER",
+    column_id: {
+      type: "INTEGER",
+      canBeNull: false,
+    },
+    change_id: {
+      type: "INTEGER",
+      canBeNull: false,
+    },
+    old_value: {
+      type: "TEXT",
+      canBeNull: true,
+    },
+    new_value: {
+      type: "TEXT",
+      canBeNull: true,
+    },
+  },
+  foreignKeys: {
+    column_id: {
+      referencedTable: "columns",
+      column: "id",
+      onDelete: "CASCADE",
+    },
+    change_id: {
+      referencedTable: "changes",
+      column: "id",
+      onDelete: "CASCADE",
+    },
+  },
+};
+
+export interface Value {
+  id: number;
+  column_id: number;
+  change_id: number;
+  old_value: Buffer | null;
+  new_value: Buffer | null;
 }
 
-namespace Actions {
-  export const TableDef: TableDefinition = {
-    primaryKey: ["id"],
-    columns: {
-      id: "INTEGER",
-      created_at: {
-        type: "TEXT",
-        canBeNull: false,
-      },
-      order_index: {
-        type: "INTEGER",
-        canBeNull: false,
-      },
-      undone: {
-        type: "INTEGER",
-        canBeNull: false,
-        check: "undone IN (0, 1)"
-      },
-      category_id: {
-        type: "INTEGER",
-        canBeNull: true,
-      },
-      channel_id: {
-        type: "INTEGER",
-        canBeNull: false,
-      }
-    },
-    foreignKeys: {
-      category_id: {
-        referencedTable: "categories",
-        column: "id",
-        onDelete: "SET_NULL",
-      },
-      channel_id: {
-        referencedTable: "channels",
-        column: "id",
-        onDelete: "CASCADE"
-      },
-    },
-  };
-
-  export interface Row {
-    id: number;
-    created_at: string;
-    category_id: number | null;
-    channel_id: number;
-    order_index: number;
-    undone: boolean;
-  }
-}
-
-namespace Changes {
-  export const TableDef: TableDefinition = {
-    primaryKey: ["id"],
-    columns: {
-      id: "INTEGER",
-      table_id: { type: "INTEGER", canBeNull: false },
-      old_row_id: { type: "INTEGER", canBeNull: true },
-      new_row_id: { type: "INTEGER", canBeNull: true },
-      action_id: { type: "INTEGER", canBeNull: false },
-      order_index: { type: "INTEGER", canBeNull: false },
-      type: {
-        type: "TEXT",
-        canBeNull: false,
-        check: "type IN ('INSERT','DELETE','UPDATE')",
-      },
-    },
-    foreignKeys: {
-      action_id: {
-        referencedTable: "actions",
-        column: "id",
-        onDelete: "CASCADE",
-      },
-      table_id: {
-        referencedTable: "tables",
-        column: "id",
-        onDelete: "CASCADE",
-      },
-    },
-  };
-
-  export interface Row {
-    id: number;
-    old_row_id: number;
-    new_row_id: number;
-    action_id: number;
-    table_id: number;
-    order_id: number;
-    type: ChangeType;
-  }
-}
-
-namespace Tables {
-  export const TableDef: TableDefinition = {
-    primaryKey: ["id"],
-    columns: {
-      id: "INTEGER",
-      name: {
-        type: "TEXT",
-        canBeNull: false,
-      },
-      channel_id: {
-        type: "INTEGER",
-        canBeNull: false,
-      },
-    },
-    uniques: [["name"]],
-    foreignKeys: {
-      channel_id: {
-        referencedTable: "channels",
-        column: "id",
-        onDelete: "CASCADE",
-      },
-    },
-  };
-
-  export interface Row {
-    id: number;
-    name: string;
-    channel_id: number;
-  }
-}
-
-namespace Columns {
-  export const TableDef: TableDefinition = {
-    primaryKey: ["id"],
-    columns: {
-      id: "INTEGER",
-      name: {
-        type: "TEXT",
-        canBeNull: false,
-      },
-      type: {
-        type: "TEXT",
-        canBeNull: false,
-      },
-      table_id: {
-        type: "INTEGER",
-        canBeNull: false,
-      },
-    },
-    uniques: [["table_id", "name"]],
-    foreignKeys: {
-      table_id: {
-        referencedTable: "tables",
-        column: "id",
-        onDelete: "CASCADE",
-      },
-    },
-  };
-
-  export interface Row {
-    id: number;
-    name: string;
-    type: string;
-    table_id: number;
-  }
-}
-
-namespace Values {
-  export const TableDef: TableDefinition = {
-    primaryKey: ["id"],
-    columns: {
-      id: "INTEGER",
-      column_id: {
-        type: "INTEGER",
-        canBeNull: false,
-      },
-      change_id: {
-        type: "INTEGER",
-        canBeNull: false,
-      },
-      old_value: {
-        type: "TEXT",
-        canBeNull: true,
-      },
-      new_value: {
-        type: "TEXT",
-        canBeNull: true,
-      },
-    },
-    foreignKeys: {
-      column_id: {
-        referencedTable: "columns",
-        column: "id",
-        onDelete: "CASCADE",
-      },
-      change_id: {
-        referencedTable: "changes",
-        column: "id",
-        onDelete: "CASCADE",
-      },
-    },
-  };
-
-  export interface Row {
-    id: number;
-    column_id: number;
-    change_id: number;
-    old_value: Buffer | null;
-    new_value: Buffer | null;
-  }
-}
-
-export default {
-  channels: Channels.TableDef,
-  categories: Categories.TableDef,
-  actions: Actions.TableDef,
-  changes: Changes.TableDef,
-  tables: Tables.TableDef,
-  columns: Columns.TableDef,
-  values: Values.TableDef,
-} as Record<string, TableDefinition>;
-
-
-export type Category = Categories.Row;
-export type Action = Actions.Row;
-export type Change = Changes.Row;
-export type Channel = Channels.Row;
-export type Table = Tables.Row;
-export type Column = Columns.Row;
-export type Value = Values.Row;
+export const tables = [
+  Channels,
+  Categories,
+  Actions,
+  Changes,
+  Tables,
+  Columns,
+  Values
+];

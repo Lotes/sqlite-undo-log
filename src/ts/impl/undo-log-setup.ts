@@ -1,4 +1,4 @@
-import tables from "../tables";
+import {tables} from "../tables";
 import { UndoLogUtils, Connection, TableColumn, UndoLogSetup, ChangeType } from "../types";
 
 export class UndoLogSetupImpl implements UndoLogSetup {
@@ -15,13 +15,13 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     this.utils = utils;
   }
   async install(): Promise<void> {
-    for (const n of Object.keys(tables)) {
-      await this.utils.createUndoLogTable(n, tables[n]);
+    for (const table of tables) {
+      await this.utils.createUndoLogTable(table.name, table);
     }
   }
   async uninstall(): Promise<void> {
-    for (const n of Object.getOwnPropertyNames(tables).reverse()) {
-      await this.utils.dropUndoLogTable(`${n}`);
+    for (const table of tables) {
+      await this.utils.dropUndoLogTable(table.name);
     }
   }
   async addTable(name: string, channelId: number): Promise<void> {

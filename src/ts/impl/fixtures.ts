@@ -9,6 +9,7 @@ import { UndoLogUtilsImpl } from "./undo-log-utils";
 
 export namespace AllTypeTable {
     export const Definition: TableDefinition = {
+        name: "all_types",
         primaryKey: ["id"],
         columns: {
             id: "INTEGER",
