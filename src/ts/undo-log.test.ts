@@ -4,9 +4,9 @@ import {
   UndoLog,
   UndoLogSetup,
   UndoLogUtils,
-} from "../types";
+} from "./types";
 import { AllTypeTable, setupBeforeEach } from "./fixtures";
-import { tables, Action, Change } from "../tables";
+import { tables, Action, Change } from "./tables";
 
 describe("UndoLog", () => {
   let connection: Connection;
@@ -25,7 +25,7 @@ describe("UndoLog", () => {
     connection.close();
   });
 
-  test("all tables are ready", async () => {
+  test("tables are existing", async () => {
     const expected = tables.map(t => t.name);
     const actual = await Promise.all(
       expected.map(async (name) =>
@@ -45,26 +45,16 @@ describe("UndoLog", () => {
     });
 
     // assert
-    const rows = await connection.getAll(
-      "SELECT column_id, new_value FROM undo_values"
-    );
-    expect(rows).toEqual([
-      { column_id: 0, new_value: "1" },
-      { column_id: 1, new_value: "'one'" },
-      { column_id: 2, new_value: "1" },
-      { column_id: 3, new_value: "'juan'" },
-      { column_id: 4, new_value: "0.0" },
-    ]);
-
-    const actions = await connection.getAll<Action>(
-      "SELECT * FROM undo_actions"
-    );
-    expect(actions.length).toBe(1);
-
-    const changes = await connection.getAll<Change>(
-      "SELECT * FROM undo_changes"
-    );
-    expect(changes.length).toBe(1);
+    const channel = await assertions.assertChannelInStatus(0, "READY");
+    const [action] = await assertions.assertChannelHasActions(channel, 1);
+    const [change] = await assertions.assertActionHasChanges(action, 1);
+    await assertions.assertChangeHasValues(change, "new", {
+      id: "1",
+      name: "'one'",
+      num: "1",
+      blob: "'juan'",
+      zero: "0.0"
+    });
   });
 
   test("undo of insertion works", async () => {

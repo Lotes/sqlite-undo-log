@@ -1,29 +1,6 @@
-export type SqliteType = "TEXT" | "NUMERIC" | "INTEGER" | "REAL" | "BLOB";
-export interface SqliteColumnDefinition {
-  type: SqliteType;
-  canBeNull?: boolean;
-  check?: string;
-}
-export type SqliteColumn = SqliteType | SqliteColumnDefinition;
-export interface TableColumns {
-  [name: string]: SqliteColumn;
-}
-export interface ForeignKey {
-  referencedTable: string;
-  column: string;
-  onDelete: "CASCADE" | "SET_NULL" | "NOTHING";
-}
-export interface TableForeignKeys {
-  [name: string]: ForeignKey;
-}
-export interface TableDefinition {
-  name: string;
-  primaryKey: string[];
-  columns: TableColumns;
-  uniques?: string[][];
-  foreignKeys?: TableForeignKeys;
-}
+import { Action, Change, Channel, ChannelStatus, TableDefinition } from "./tables";
 
+export type OldOrNew = "old"|"new";
 export type Parameters = Record<string, string | number | boolean | null>;
 export interface RunResult {
   lastID?: number;
@@ -61,8 +38,6 @@ export interface PragmaTableInfo {
   pk: number;
 }
 
-export type ChannelStatus = "READY"|"RECORDING"|"UNDOING"|"REDOING";
-
 export interface UndoLogUtils {
   createUndoLogTable(tableName: string, definition: TableDefinition): Promise<void>;
   insertIntoUndoLogTable<T extends Record<string, any>>(tableName: string, row: T): Promise<void>;
@@ -82,6 +57,11 @@ export interface UndoLogUtils {
   doesTableExist(name: string): Promise<boolean>;
   hasTableId(name: string, id: number): Promise<boolean>;
   tableHas<T extends Record<string, any> & {id: number}>(tableName: string, row: T): Promise<boolean>;
+
+  getChannel(channelId: number): Promise<Channel|null>;
+  getActionsOfChannel(channel: Channel): Promise<Action[]>;
+  getChangesOfAction(action: Action): Promise<Change[]>;
+  getValuesOfChange(change: Change, type: OldOrNew): Promise<Record<string, any>>;
 }
 
 export interface UndoLogSetup {
@@ -109,6 +89,11 @@ export class AssertionError extends Error {
 }
 
 export interface Assertions {
+  assertChannelInStatus(channelId: number, status: ChannelStatus): Promise<Channel>;
+  assertChannelHasActions(channel: Channel, numberOfActions: number): Promise<Action[]>;
+  assertActionHasChanges(action: Action, numberOfChanges: number): Promise<Change[]>;
+  assertChangeHasValues<T extends Record<string, any>>(change: Change, type: "old"|"new", values: Partial<T>): Promise<void>;
+
   assertTableHas<T extends Record<string, any> & {id: number}>(tableName: string, row: T): Promise<void>;
   assertTrue(value: boolean, message: string): void;
   assertFalse(value: boolean, message: string): void;
@@ -122,5 +107,3 @@ export interface NameValuePair {
   name: string;
   value: string;
 }
-
-export type ChangeType = "INSERT"|"DELETE"|"UPDATE";

@@ -1,5 +1,5 @@
-import { Connection, UndoLogUtils, UndoLog, UndoLogError, NameValuePair } from "../types";
-import { Action, Category, Change, Channel, Table } from "../tables";
+import { Connection, UndoLogUtils, UndoLog, UndoLogError, NameValuePair } from "./types";
+import { Action, Category, Change, Channel, Table } from "./tables";
 
 export class UndoLogImpl implements UndoLog {
   private connection: Connection;

@@ -1,5 +1,5 @@
-import {tables} from "../tables";
-import { UndoLogUtils, Connection, TableColumn, UndoLogSetup, ChangeType } from "../types";
+import {ChangeType, tables} from "./tables";
+import { UndoLogUtils, Connection, TableColumn, UndoLogSetup } from "./types";
 
 export class UndoLogSetupImpl implements UndoLogSetup {
   private connection: Connection;

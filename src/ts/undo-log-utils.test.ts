@@ -1,5 +1,5 @@
-import { Connection, UndoLogUtils, Assertions } from "../types";
-import { Channel, Changes, Channels } from "../tables";
+import { Connection, UndoLogUtils, Assertions } from "./types";
+import { Channel, Changes, Channels } from "./tables";
 import { setupBeforeEach } from "./fixtures";
 
 describe("UndoLogUtils", () => {

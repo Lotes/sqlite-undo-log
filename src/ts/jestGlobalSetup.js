@@ -1,4 +1,4 @@
-const { setupBeforeAll } = require("./impl/fixtures");
+const { setupBeforeAll } = require("./fixtures");
 
 module.exports = async () => {
   await setupBeforeAll();

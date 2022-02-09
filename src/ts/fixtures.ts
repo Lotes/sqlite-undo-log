@@ -1,11 +1,12 @@
 import { promises } from "fs";
 import path from "path";
-import { Database, TableDefinition } from "../types";
+import { Database } from "./types";
 import { AssertionsImpl } from "./assertions";
 import { DatabaseImpl } from "./sqlite3";
 import { UndoLogImpl } from "./undo-log";
 import { UndoLogSetupImpl } from "./undo-log-setup";
 import { UndoLogUtilsImpl } from "./undo-log-utils";
+import { TableDefinition } from "./tables";
 
 export namespace AllTypeTable {
     export const Definition: TableDefinition = {

@@ -1,4 +1,32 @@
-import { ChangeType, ChannelStatus, TableDefinition } from "./types";
+export type SqliteType = "TEXT" | "NUMERIC" | "INTEGER" | "REAL" | "BLOB";
+export interface SqliteColumnDefinition {
+  type: SqliteType;
+  canBeNull?: boolean;
+  check?: string;
+}
+export type SqliteColumn = SqliteType | SqliteColumnDefinition;
+export interface TableColumns {
+  [name: string]: SqliteColumn;
+}
+export interface ForeignKey {
+  referencedTable: string;
+  column: string;
+  onDelete: "CASCADE" | "SET_NULL" | "NOTHING";
+}
+export interface TableForeignKeys {
+  [name: string]: ForeignKey;
+}
+export interface TableDefinition {
+  name: string;
+  primaryKey: string[];
+  columns: TableColumns;
+  uniques?: string[][];
+  foreignKeys?: TableForeignKeys;
+}
+
+
+export type ChangeType = "INSERT"|"DELETE"|"UPDATE";
+export type ChannelStatus = "READY"|"RECORDING"|"UNDOING"|"REDOING";
 
 export const Channels: TableDefinition = {
   name: "channels",
