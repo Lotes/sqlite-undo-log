@@ -1,12 +1,12 @@
 import { promises } from "fs";
 import path from "path";
-import { Database } from "./types";
-import { AssertionsImpl } from "./assertions";
-import { DatabaseImpl } from "./sqlite3";
-import { UndoLogImpl } from "./undo-log";
-import { UndoLogSetupImpl } from "./undo-log-setup";
-import { UndoLogUtilsImpl } from "./undo-log-utils";
-import { TableDefinition } from "./tables";
+import { Database } from "../sqlite3";
+import { DatabaseImpl } from "../impl/sqlite3";
+import { UndoLogImpl } from "../impl/undo-log";
+import { UndoLogAssertionsImpl } from "../impl/undo-log-assertions";
+import { UndoLogSetupImpl } from "../impl/undo-log-setup";
+import { UndoLogUtilsImpl } from "../impl/undo-log-utils";
+import { TableDefinition } from "../tables";
 
 export namespace AllTypeTable {
     export const Definition: TableDefinition = {
@@ -50,7 +50,7 @@ export async function setupBeforeEach() {
     const utils = new UndoLogUtilsImpl(connection)
     const setup = new UndoLogSetupImpl(connection, utils);
     const log = new UndoLogImpl(connection, utils);
-    const assertions = new AssertionsImpl(utils);
+    const assertions = new UndoLogAssertionsImpl(utils);
     return {
         connection,
         utils,

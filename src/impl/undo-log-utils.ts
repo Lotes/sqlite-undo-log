@@ -1,130 +1,28 @@
-import { Action, Channel, TableDefinition, SqliteColumnDefinition, ForeignKey, ChannelStatus, Change } from "./tables";
-import { Connection, NameValuePair, OldOrNew, PragmaTableInfo, TableColumn, UndoLogError, UndoLogUtils } from "./types";
+import { Connection } from "../sqlite3";
+import { TableColumn, TableDefinition, ForeignKey, SqliteColumnDefinition, Action, ChannelStatus, Change, Channel } from "../tables";
+import { PragmaTableInfo, UndoLogError, OldOrNew, NameValuePair } from "../types";
+import { UndoLogUtils } from "../undo-log-utils";
+import { Utils } from "../utils";
 
-export class UndoLogUtilsImpl implements UndoLogUtils {
-  private connection: Connection;
-  private prefix: string;
-  constructor(connection: Connection, prefix: string = "undo_") {
+export class UtilsImpl implements Utils {
+  protected connection: Connection;
+  constructor(connection: Connection) {
     this.connection = connection;
-    this.prefix = prefix;
   }
-  async markActionAsUndone(actionId: number, undone: boolean): Promise<void> {
-    this.updateUndoLogTable<Action>("actions", {
-      id: actionId,
-      undone
+  async updateTable<T extends Record<string, any>>(tableName: string, rowid: number, data: Partial<T>): Promise<void> {
+    let tail: string[] = [];
+    let parameters = {$rowid: rowid};
+    Object.getOwnPropertyNames(data).forEach(c => {
+      tail.push(`${c}=$${c}`);
+      parameters = {...parameters, [`$${c}`]: data[c] };
     });
+    const query = `UPDATE ${tableName} SET ${tail.join(", ")} WHERE rowid=$rowid`;
+    await this.connection.run(query, parameters);
   }
-  async insertIntoUndoLogTable<T extends Record<string, any>>(tableName: string, row: T): Promise<void> {
-    await this.insertIntoTable<T>(`${this.prefix}${tableName}`, row);
-  }
+  
   async doesColumnExist(tableName: string, columnName: string): Promise<boolean> {
     const columns = await this.getMetaTable(tableName);
     return columns.findIndex(c => c.name.toLowerCase() === columnName.toLowerCase()) > -1;
-  }
-
-  async createUndoLogTable(tableName: string, definition: TableDefinition) {
-    const columns = this.createColumnDefinitions(definition);
-    const foreigns = this.createForeignKeys(definition, this.prefix);
-    const uniques = this.createUniqueKeys(definition);
-    const query = `CREATE TABLE ${this.prefix}${tableName} (${columns}${foreigns}${uniques});`;
-    await this.connection.execute(query);
-  }
-
-  private createUniqueKeys(definition: TableDefinition) {
-    return definition.uniques != null
-      ? "," +
-      definition.uniques.map((x) => `UNIQUE (${x.join(", ")})`).join(", ")
-      : "";
-  }
-
-  private createForeignKeys(definition: TableDefinition, prefix: string) {
-    const foreignFunc = (n: string, f: ForeignKey) => `FOREIGN KEY(${n}) REFERENCES ${prefix}${f.referencedTable}(${f.column}) ${f.onDelete === "CASCADE"
-        ? "ON DELETE CASCADE"
-        : f.onDelete === "SET_NULL"
-          ? "ON DELETE SET NULL"
-          : ""}`;
-    const foreigns = definition.foreignKeys != null
-      ? "," +
-      Object.getOwnPropertyNames(definition.foreignKeys)
-        .map((fk) => {
-          return foreignFunc(fk, definition.foreignKeys![fk]);
-        })
-        .join(", ")
-      : "";
-    return foreigns;
-  }
-
-  createColumnDefinitions(definition: TableDefinition) {
-    return Object.getOwnPropertyNames(definition.columns).map((n) => {
-      const xxx = definition.columns[n];
-      const def = typeof xxx == "string"
-        ? { type: xxx }
-        : (xxx as SqliteColumnDefinition);
-      const pk = definition.primaryKey.indexOf(n) > -1;
-      const ai = pk ? "PRIMARY KEY AUTOINCREMENT" : "";
-      const nn = !pk && def.canBeNull === false;
-      const ch = def.check != null ? `CHECK(${def.check})` : "";
-      return `${n} ${def.type} ${!pk ? (nn ? "NOT NULL" : "NULL") : ai} ${ch}`;
-    });
-  }
-
-  async createTable(tableName: string, definition: TableDefinition): Promise<void> {
-    const columns = this.createColumnDefinitions(definition);
-    const foreigns = this.createForeignKeys(definition, "");
-    const uniques = this.createUniqueKeys(definition);
-    const query = `CREATE TABLE ${tableName} (${columns}${foreigns}${uniques});`;
-    await this.connection.execute(query);
-  }
-
-  async updateTable<T extends Record<string, any>>(tableName: string, rowId: number, data: Partial<T>): Promise<void> {
-    let tail: string[] = [];
-    let parameters = {$rowid: rowId};
-    Object.getOwnPropertyNames(data).forEach(c => {
-      tail.push(`${c}=$${c}`);
-      parameters = {...parameters, [`$${c}`]: data[c] };
-    });
-    const query = `UPDATE ${this.prefix}${tableName} SET ${tail.join(", ")} WHERE rowid=$rowid`;
-    await this.connection.run(query, parameters);
-  }
-
-  async dropUndoLogTable(tableName: string) {
-    const query = `DROP TABLE ${this.prefix}${tableName}`;
-    await this.connection.execute(query);
-  }
-
-  async getOrCreateReadyChannel(channel: number) {
-    const parameters = { $channel: channel };
-    await this.connection.run(
-      `INSERT OR IGNORE INTO ${this.prefix}channels (id, status) VALUES ($channel, 'READY')`,
-      parameters
-    );
-    const row = await this.connection.getSingle<Channel>(
-      `SELECT * FROM ${this.prefix}channels`
-    );
-    if (row == null) {
-      throw new UndoLogError(`Unable to create or get a channel '${channel}'.`);
-    }
-    if (row.status !== "READY")  {
-      throw new UndoLogError(`Expected channel '${channel}' to have status 'READY', but was '${row.status}'.`);
-    }
-  }
-
-  async updateUndoLogTable<T extends Record<string, any> & {id: number}>(tableName: string, data: Partial<T>& {id: number}): Promise<void> {
-    let tail: string[] = [];
-    let parameters = {};
-    Object.getOwnPropertyNames(data).forEach(c => {
-      tail.push(`${c}=$${c}`);
-      parameters = {...parameters, [`$${c}`]: data[c] };
-    });
-    const query = `UPDATE ${this.prefix}${tableName} SET ${tail.join(", ")} WHERE id=$id`;
-    await this.connection.run(query, parameters);
-  }
-
-  async updateChannel(channelId: number, status: ChannelStatus) {
-    await this.updateUndoLogTable<Channel>("channels", {
-      id: channelId,
-      status
-    });
   }
 
   cellToString(value: any) {
@@ -162,6 +60,51 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
     });
   }
 
+  async createTable(tableName: string, definition: TableDefinition): Promise<void> {
+    const columns = this.createColumnDefinitions(definition);
+    const foreigns = this.createForeignKeys(definition, "");
+    const uniques = this.createUniqueKeys(definition);
+    const query = `CREATE TABLE ${tableName} (${columns}${foreigns}${uniques});`;
+    await this.connection.execute(query);
+  }
+  protected createUniqueKeys(definition: TableDefinition) {
+    return definition.uniques != null
+      ? "," +
+      definition.uniques.map((x) => `UNIQUE (${x.join(", ")})`).join(", ")
+      : "";
+  }
+
+  protected createForeignKeys(definition: TableDefinition, prefix: string) {
+    const foreignFunc = (n: string, f: ForeignKey) => `FOREIGN KEY(${n}) REFERENCES ${prefix}${f.referencedTable}(${f.column}) ${f.onDelete === "CASCADE"
+        ? "ON DELETE CASCADE"
+        : f.onDelete === "SET_NULL"
+          ? "ON DELETE SET NULL"
+          : ""}`;
+    const foreigns = definition.foreignKeys != null
+      ? "," +
+      Object.getOwnPropertyNames(definition.foreignKeys)
+        .map((fk) => {
+          return foreignFunc(fk, definition.foreignKeys![fk]);
+        })
+        .join(", ")
+      : "";
+    return foreigns;
+  }
+
+  protected createColumnDefinitions(definition: TableDefinition) {
+    return Object.getOwnPropertyNames(definition.columns).map((n) => {
+      const xxx = definition.columns[n];
+      const def = typeof xxx == "string"
+        ? { type: xxx }
+        : (xxx as SqliteColumnDefinition);
+      const pk = definition.primaryKey.indexOf(n) > -1;
+      const ai = pk ? "PRIMARY KEY AUTOINCREMENT" : "";
+      const nn = !pk && def.canBeNull === false;
+      const ch = def.check != null ? `CHECK(${def.check})` : "";
+      return `${n} ${def.type} ${!pk ? (nn ? "NOT NULL" : "NULL") : ai} ${ch}`;
+    });
+  }
+
   async doesTableExist(name: string) {
     const query =
       "SELECT 1 FROM sqlite_master WHERE type='table' AND name=$name";
@@ -181,6 +124,69 @@ export class UndoLogUtilsImpl implements UndoLogUtils {
     });
     const query = `SELECT 1 AS yes FROM ${tableName} WHERE ${tail.join(" AND ")}`;
     return await this.connection.getSingle<{yes: boolean}>(query, parameters) != null;
+  }
+}
+
+export class UndoLogUtilsImpl extends UtilsImpl implements UndoLogUtils {
+  private prefix: string;
+  constructor(connection: Connection, prefix: string = "undo_") {
+    super(connection);
+    this.prefix = prefix;
+  }
+  async dropUndoLogTable(tableName: string) {
+    const query = `DROP TABLE ${this.prefix}${tableName}`;
+    await this.connection.execute(query);
+  }
+  async markActionAsUndone(actionId: number, undone: boolean): Promise<void> {
+    this.updateUndoLogTable<Action>("actions", {
+      id: actionId,
+      undone
+    });
+  }
+  async insertIntoUndoLogTable<T extends Record<string, any>>(tableName: string, row: T): Promise<void> {
+    await this.insertIntoTable<T>(`${this.prefix}${tableName}`, row);
+  }
+  async createUndoLogTable(tableName: string, definition: TableDefinition) {
+    const columns = this.createColumnDefinitions(definition);
+    const foreigns = this.createForeignKeys(definition, this.prefix);
+    const uniques = this.createUniqueKeys(definition);
+    const query = `CREATE TABLE ${this.prefix}${tableName} (${columns}${foreigns}${uniques});`;
+    await this.connection.execute(query);
+  }
+
+  async getOrCreateReadyChannel(channel: number) {
+    const parameters = { $channel: channel };
+    await this.connection.run(
+      `INSERT OR IGNORE INTO ${this.prefix}channels (id, status) VALUES ($channel, 'READY')`,
+      parameters
+    );
+    const row = await this.connection.getSingle<Channel>(
+      `SELECT * FROM ${this.prefix}channels`
+    );
+    if (row == null) {
+      throw new UndoLogError(`Unable to create or get a channel '${channel}'.`);
+    }
+    if (row.status !== "READY")  {
+      throw new UndoLogError(`Expected channel '${channel}' to have status 'READY', but was '${row.status}'.`);
+    }
+  }
+
+  async updateUndoLogTable<T extends Record<string, any> & {id: number}>(tableName: string, data: Partial<T>& {id: number}): Promise<void> {
+    let tail: string[] = [];
+    let parameters = {};
+    Object.getOwnPropertyNames(data).forEach(c => {
+      tail.push(`${c}=$${c}`);
+      parameters = {...parameters, [`$${c}`]: data[c] };
+    });
+    const query = `UPDATE ${this.prefix}${tableName} SET ${tail.join(", ")} WHERE id=$id`;
+    await this.connection.run(query, parameters);
+  }
+
+  async updateChannel(channelId: number, status: ChannelStatus) {
+    await this.updateUndoLogTable<Channel>("channels", {
+      id: channelId,
+      status
+    });
   }
 
   async getChannel(channelId: number): Promise<Channel|null> {

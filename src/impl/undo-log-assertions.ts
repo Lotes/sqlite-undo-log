@@ -1,13 +1,9 @@
-import { Action, Change, Channel, ChannelStatus } from "./tables";
-import { Assertions, OldOrNew, UndoLogUtils } from "./types";
+import { Action, Change, Channel, ChannelStatus } from "../tables";
+import { AssertionError, OldOrNew } from "../types";
+import { UndoLogAssertions } from "../undo-log-assertions";
+import { UndoLogUtils } from "../undo-log-utils";
 
-export class AssertionError extends Error {
-  constructor(message: string) {
-    super(message);
-  }
-}
-
-export class AssertionsImpl implements Assertions {
+export class UndoLogAssertionsImpl implements UndoLogAssertions {
   private utils: UndoLogUtils;
   constructor(utils: UndoLogUtils) {
     this.utils = utils;

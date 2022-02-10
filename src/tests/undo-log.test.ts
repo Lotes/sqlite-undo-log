@@ -1,19 +1,17 @@
-import {
-  Assertions,
-  Connection,
-  UndoLog,
-  UndoLogSetup,
-  UndoLogUtils,
-} from "./types";
+import { Connection } from "../sqlite3";
+import { tables } from "../tables";
+import { UndoLog } from "../undo-log";
+import { UndoLogAssertions } from "../undo-log-assertions";
+import { UndoLogSetup } from "../undo-log-setup";
+import { UndoLogUtils } from "../undo-log-utils";
 import { AllTypeTable, setupBeforeEach } from "./fixtures";
-import { tables, Action, Change } from "./tables";
 
 describe("UndoLog", () => {
   let connection: Connection;
   let setup: UndoLogSetup;
   let log: UndoLog;
   let utils: UndoLogUtils;
-  let assertions: Assertions;
+  let assertions: UndoLogAssertions;
 
   beforeEach(async () => {
     ({ setup, assertions, utils, log, connection, assertions } =
@@ -39,8 +37,9 @@ describe("UndoLog", () => {
     // arrange
     await utils.createTable("all_types", AllTypeTable.Definition);
     await setup.addTable("all_types", 0);
+
+    // act
     await log.recordWithin(0, undefined, async () => {
-      // act
       await utils.insertIntoTable("all_types", AllTypeTable.Values[0]);
     });
 

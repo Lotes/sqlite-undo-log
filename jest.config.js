@@ -2,5 +2,5 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  globalSetup: "./src/ts/jestGlobalSetup.js"
+  globalSetup: "./src/tests/jestGlobalSetup.js"
 };

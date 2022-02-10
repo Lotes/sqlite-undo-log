@@ -1,5 +1,7 @@
-import {ChangeType, tables} from "./tables";
-import { UndoLogUtils, Connection, TableColumn, UndoLogSetup } from "./types";
+import { Connection } from "../sqlite3";
+import { tables, ChangeType, TableColumn } from "../tables";
+import { UndoLogSetup } from "../undo-log-setup";
+import { UndoLogUtils } from "../undo-log-utils";
 
 export class UndoLogSetupImpl implements UndoLogSetup {
   private connection: Connection;

@@ -1,5 +1,8 @@
-import { Connection, UndoLogUtils, UndoLog, UndoLogError, NameValuePair } from "./types";
-import { Action, Category, Change, Channel, Table } from "./tables";
+import { UndoLogError, NameValuePair } from "../types";
+import { Action, Category, Change, Channel, Table } from "../tables";
+import { Connection } from "../sqlite3";
+import { UndoLog } from "../undo-log";
+import { UndoLogUtils } from "../undo-log-utils";
 
 export class UndoLogImpl implements UndoLog {
   private connection: Connection;

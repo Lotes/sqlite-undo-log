@@ -1,3 +1,12 @@
+export interface TableColumn {
+  id: number;
+  name: string;
+  type: string;
+  canBeNull?: boolean;
+  defaultValue: string | null;
+  isPrimaryKey: boolean;
+}
+
 export type SqliteType = "TEXT" | "NUMERIC" | "INTEGER" | "REAL" | "BLOB";
 export interface SqliteColumnDefinition {
   type: SqliteType;

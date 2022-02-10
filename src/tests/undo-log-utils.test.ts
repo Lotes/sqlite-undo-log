@@ -1,11 +1,13 @@
-import { Connection, UndoLogUtils, Assertions } from "./types";
-import { Channel, Changes, Channels } from "./tables";
+import { Channel, Changes, Channels } from "../tables";
 import { setupBeforeEach } from "./fixtures";
+import { Connection } from "../sqlite3";
+import { UndoLogAssertions } from "../undo-log-assertions";
+import { UndoLogUtils } from "../undo-log-utils";
 
 describe("UndoLogUtils", () => {
   let connection: Connection;
   let utils: UndoLogUtils;
-  let assertions: Assertions;
+  let assertions: UndoLogAssertions;
 
   beforeEach(async () => {
     ({ assertions, utils, connection } = await setupBeforeEach());
