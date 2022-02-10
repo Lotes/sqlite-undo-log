@@ -133,5 +133,11 @@ export class UtilsImpl implements Utils {
       const query = `SELECT 1 AS yes FROM ${tableName} WHERE ${tail.join(" AND ")}`;
       return await this.connection.getSingle<{yes: boolean}>(query, parameters) != null;
     }
+
+    async deleteFromTable(tableName: string, id: number): Promise<void> {
+      const query = `DELETE FROM ${tableName} WHERE id=$id`;
+      const parameters = {$id:id};
+      await this.connection.run(query, parameters);
+    }
   }
   

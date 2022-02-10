@@ -35,10 +35,8 @@ export class UndoLogAssertionsImpl extends AssertionsImpl implements UndoLogAsse
   async assertChangeHasValues<T extends Record<string, any>>(change: Change, type: OldOrNew, expected: Partial<T>): Promise<void> {
     const actual = await this.undoLogUtils.getValuesOfChange(change, type);
     const expectedNames = Object.getOwnPropertyNames(expected);
-    const actualNames = Object.getOwnPropertyNames(actual);
-    const allNames = [...new Set([...expectedNames, ...actualNames])];
     const errors: string[] = [];
-    allNames.forEach(n=> {
+    expectedNames.forEach(n => {
       if(expected[n] !== actual[n]) {
         errors.push(`Expected change ${change.id} to have ${type} value "${expected[n]}" for column "${n}", but "${actual[n]}" was found.`);
       }

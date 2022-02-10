@@ -20,4 +20,5 @@ export interface Utils {
     tableName: string,
     row: T
   ): Promise<boolean>;
+  deleteFromTable(tableName: string, id: number): Promise<void>;
 }
