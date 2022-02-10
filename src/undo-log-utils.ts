@@ -5,8 +5,14 @@ import {
   Change,
   Channel,
 } from "./tables";
-import { OldOrNew } from "./types";
 import { Utils } from "./utils";
+
+export type OldOrNew = "old"|"new";
+
+export interface NameValuePair {
+  name: string;
+  value: string;
+}
 
 export interface UndoLogUtils extends Utils {
   //tables

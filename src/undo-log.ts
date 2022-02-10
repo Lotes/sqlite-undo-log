@@ -1,3 +1,9 @@
+export class UndoLogError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 export interface UndoLog {
   recordWithin(
     channel: number,

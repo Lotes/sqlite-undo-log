@@ -1,3 +1,9 @@
+export class AssertionError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 export interface Assertions {
   assertTableHas<T extends Record<string, any> & { id: number }>(
     tableName: string,
