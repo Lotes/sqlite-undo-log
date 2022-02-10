@@ -1,4 +1,4 @@
-import { Connection } from "../sqlite3";
+import { Connection, Parameters } from "../sqlite3";
 import { TableColumn, TableDefinition, ForeignKey, SqliteColumnDefinition } from "../tables";
 import { Utils } from "../utils";
 
@@ -16,13 +16,20 @@ export class UtilsImpl implements Utils {
     constructor(connection: Connection) {
       this.connection = connection;
     }
-    async updateTable<T extends Record<string, any>>(tableName: string, rowid: number, data: Partial<T>): Promise<void> {
+    toParameterList<T extends Record<string, any>>(data: Partial<T>):[Parameters, string[]] {
       let tail: string[] = [];
-      let parameters = {$rowid: rowid};
+      let parameters = {};
       Object.getOwnPropertyNames(data).forEach(c => {
         tail.push(`${c}=$${c}`);
         parameters = {...parameters, [`$${c}`]: data[c] };
       });
+      return [parameters, tail];
+    }
+    async updateTable<T extends Record<string, any>>(tableName: string, rowid: number, data: Partial<T>): Promise<void> {
+      let [parameters, tail] = this.toParameterList({
+        ...data,
+        rowid
+      })
       const query = `UPDATE ${tableName} SET ${tail.join(", ")} WHERE rowid=$rowid`;
       await this.connection.run(query, parameters);
     }
@@ -113,8 +120,7 @@ export class UtilsImpl implements Utils {
     }
   
     async doesTableExist(name: string) {
-      const query =
-        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=$name";
+      const query = "SELECT 1 FROM sqlite_master WHERE type='table' AND name=$name";
       const parameters = { "$name": name };
       const row = await this.connection.getSingle(query, parameters);
       return row != null;
@@ -123,12 +129,7 @@ export class UtilsImpl implements Utils {
       return await this.tableHas(name, {id});
     }
     async tableHas<T extends Record<string, any> & { id: number; }>(tableName: string, row: T): Promise<boolean> {
-      let tail: string[] = [];
-      let parameters = {};
-      Object.getOwnPropertyNames(row).forEach(c => {
-        tail.push(`${c}=$${c}`);
-        parameters = {...parameters, [`$${c}`]: row[c] };
-      });
+      const [parameters, tail] = this.toParameterList(row);
       const query = `SELECT 1 AS yes FROM ${tableName} WHERE ${tail.join(" AND ")}`;
       return await this.connection.getSingle<{yes: boolean}>(query, parameters) != null;
     }

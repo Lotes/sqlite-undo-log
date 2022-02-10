@@ -1,7 +1,7 @@
 import { Action, Category, Change, Channel, Table } from "../tables";
 import { Connection } from "../sqlite3";
 import { UndoLog, UndoLogError } from "../undo-log";
-import { NameValuePair, UndoLogUtils } from "../undo-log-utils";
+import { UndoLogUtils } from "../undo-log-utils";
 
 export class UndoLogImpl implements UndoLog {
   private connection: Connection;
@@ -63,7 +63,15 @@ export class UndoLogImpl implements UndoLog {
   }
   async undo(channelId: number): Promise<void> {
     await this.utils.getOrCreateReadyChannel(channelId);
-    const query = `SELECT a.* FROM ${this.prefix}channels ch LEFT JOIN ${this.prefix}actions a ON a.channel_id=ch.id WHERE ch.id=$channel ORDER BY a.order_index DESC LIMIT 1`;
+    const query = `
+      SELECT a.*
+      FROM ${this.prefix}channels ch
+        LEFT JOIN ${this.prefix}actions a 
+          ON a.channel_id=ch.id
+      WHERE ch.id=$channel AND a.undone=0
+      ORDER BY a.order_index DESC
+      LIMIT 1
+    `;
     const parameters = {$channel: channelId};
     const row = await this.connection.getSingle<Action>(query, parameters);
     if(row?.id == null) {
@@ -100,24 +108,11 @@ export class UndoLogImpl implements UndoLog {
     }
   }
   private async undoDeletion(table: Table, change: Change) {
-    const values = await this.getValues(change, "old");
-    let record = {};
-    values.forEach(v => record = {...record, [v.name]: v.value});
-    await this.utils.insertIntoTable(table.name, record);
+    const values = await this.utils.getValuesOfChange(change, "old");
+    await this.utils.insertIntoTable(table.name, values);
   }
   private async undoUpdate(table: Table, change: Change) {
-    const values = await this.getValues(change, "old");
-    let record = {rowid: change.old_row_id};
-    values.forEach(v => record = {...record, [v.name]: v.value});
-    await this.utils.updateTable(table.name, change.new_row_id, record);
-  }
-  private async getValues(change: Change, which:"old"|"new") {
-    const query = `
-      SELECT c.name, v.${which}_value AS value
-      FROM ${this.prefix}values v INNER JOIN ${this.prefix}columns c ON v.column_id=c.id
-      WHERE v.change_id=$changeId
-    `;
-    const parameters = {$changeId: change.id};
-    return await this.connection.getAll<NameValuePair>(query, parameters);
+    const values = await this.utils.getValuesOfChange(change, "old");
+    await this.utils.updateTable(table.name, change.new_row_id, values);
   }
 }

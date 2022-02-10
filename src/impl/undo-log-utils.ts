@@ -49,12 +49,7 @@ export class UndoLogUtilsImpl extends UtilsImpl implements UndoLogUtils {
   }
 
   async updateUndoLogTable<T extends Record<string, any> & {id: number}>(tableName: string, data: Partial<T>& {id: number}): Promise<void> {
-    let tail: string[] = [];
-    let parameters = {};
-    Object.getOwnPropertyNames(data).forEach(c => {
-      tail.push(`${c}=$${c}`);
-      parameters = {...parameters, [`$${c}`]: data[c] };
-    });
+    const [parameters, tail] = this.toParameterList(data);
     const query = `UPDATE ${this.prefix}${tableName} SET ${tail.join(", ")} WHERE id=$id`;
     await this.connection.run(query, parameters);
   }
