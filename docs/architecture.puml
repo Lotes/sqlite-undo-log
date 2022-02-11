@@ -1,0 +1,21 @@
+skinparam monochrome true
+skinparam ranksep 20
+skinparam dpi 150
+skinparam arrowThickness 0.7
+skinparam packageTitleAlignment left
+skinparam usecaseBorderThickness 0.4
+skinparam defaultFontSize 12
+skinparam rectangleBorderThickness 1
+
+component Utils
+component Assertions
+component UndoLogUtils
+component UndoLogAssertions
+component UndoLogSetup
+component UndoLog
+
+Assertions --> Utils
+UndoLogUtils --> Utils
+UndoLogAssertions --> Assertions
+UndoLogSetup --> UndoLogUtils
+UndoLog --> UndoLogUtils
