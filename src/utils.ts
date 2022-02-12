@@ -8,7 +8,6 @@ export interface Utils {
     data: Partial<T>
   ): Promise<void>;
   doesColumnExist(tableName: string, columnName: string): Promise<boolean>;
-  cellToString(value: any): string | null;
   insertIntoTable<T extends Record<string, any>>(
     name: string,
     row: T
@@ -19,6 +18,8 @@ export interface Utils {
   tableHas<T extends Record<string, any> & { id: number }>(
     tableName: string,
     row: T
-  ): Promise<boolean>;
+  ): Promise<[boolean, string[]]>;
   deleteFromTable(tableName: string, id: number): Promise<void>;
+  normalize(arg: any): any;
+  equals(left: any, right: any): boolean;
 }

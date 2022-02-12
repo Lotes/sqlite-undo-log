@@ -53,7 +53,7 @@ describe("UndoLog", () => {
         id: "1",
         name: "'one'",
         num: "1",
-        blob: "'juan'",
+        blob: Buffer.from("juan"),
         zero: "0.0",
       });
     });
@@ -78,7 +78,7 @@ describe("UndoLog", () => {
         id: "1",
         name: "'one'",
         num: "1",
-        blob: "'juan'",
+        blob: Buffer.from("juan"),
         zero: "0.0",
       });
     });
@@ -132,6 +132,22 @@ describe("UndoLog", () => {
       // assert
       const rows = await connection.getAll("SELECT * FROM all_types");
       expect(rows).toEqual([]);
+    });
+
+    test("deletion works", async () => {
+      // arrange
+      await utils.createTable("all_types", AllTypeTable.Definition);
+      await utils.insertIntoTable("all_types", AllTypeTable.Values[0]);
+      await setup.addTable("all_types", 0);
+      await log.recordWithin(0, undefined, async () => {
+        await utils.deleteFromTable("all_types", AllTypeTable.Values[0].id);
+      });
+
+      // act
+      await log.undo(0);
+
+      // assert
+      await assertions.assertTableHas("all_types", AllTypeTable.Values[0]);
     });
   });
 });

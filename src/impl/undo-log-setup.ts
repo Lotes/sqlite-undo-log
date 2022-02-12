@@ -96,8 +96,8 @@ export class UndoLogSetupImpl implements UndoLogSetup {
       ${columns.map((c) => `SELECT ${c.id}, last_insert_rowid()${recordOld ? `, quote(OLD.${c.name})` : ""}${recordNew ? `, quote(NEW.${c.name})`: ""}`).join(" UNION ")};
     `;
     const queryTrigger = `
-      CREATE TRIGGER after_${type.toLowerCase()}_${tableName}_trigger
-        AFTER ${type} ON ${tableName}
+      CREATE TRIGGER ${type.toLowerCase()}_${tableName}_trigger
+        ${type === "DELETE" ? "BEFORE" : "AFTER"} ${type} ON ${tableName}
         FOR EACH ROW
         WHEN (${this.queryIsTablesChannelStatusEqRecording(tableName)})
       BEGIN

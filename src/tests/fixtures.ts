@@ -6,7 +6,7 @@ import { UndoLogImpl } from "../impl/undo-log";
 import { UndoLogAssertionsImpl } from "../impl/undo-log-assertions";
 import { UndoLogSetupImpl } from "../impl/undo-log-setup";
 import { UndoLogUtilsImpl } from "../impl/undo-log-utils";
-import { TableDefinition } from "../tables";
+import { SqliteType, TableDefinition } from "../tables";
 
 export namespace AllTypeTable {
     export const Definition: TableDefinition = {
@@ -59,3 +59,12 @@ export async function setupBeforeEach() {
         assertions
     };
 }
+
+export const TableDefintion_OnlyOneType: (type: SqliteType) => TableDefinition = (type: SqliteType) => ({
+    name: `${type}_only`,
+    primaryKey: ["id"],
+    columns: {
+        id: "INTEGER",
+        col: type
+    }        
+});

@@ -15,4 +15,5 @@ export interface Assertions {
   assertColumnExists(tableName: string, columnName: string): Promise<void>;
   assertTableDoesNotExist(tableName: string): Promise<void>;
   assertTableHasId(tableName: string, id: number): Promise<void>;
+  assertTableHasNoId(tableName: string, id: number): Promise<void>;
 }

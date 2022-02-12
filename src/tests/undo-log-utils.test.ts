@@ -72,7 +72,7 @@ describe("UndoLogUtils", () => {
       await utils.getOrCreateReadyChannel(12345);
 
       // assert
-      await assertions.assertTableHas("undo_channels", {
+      await assertions.assertTableHas<Channel>("undo_channels", {
         id: 12345,
         status: "READY",
       });

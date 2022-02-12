@@ -37,7 +37,7 @@ export class UndoLogAssertionsImpl extends AssertionsImpl implements UndoLogAsse
     const expectedNames = Object.getOwnPropertyNames(expected);
     const errors: string[] = [];
     expectedNames.forEach(n => {
-      if(expected[n] !== actual[n]) {
+      if(!this.undoLogUtils.equals(expected[n], actual[n])) {
         errors.push(`Expected change ${change.id} to have ${type} value "${expected[n]}" for column "${n}", but "${actual[n]}" was found.`);
       }
     });
