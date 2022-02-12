@@ -205,7 +205,7 @@ describe("utils", () => {
       [123, 123],
       ['123', 123],
       ["X'1234'", Buffer.from('1234', 'hex')],
-    ])("a %s value '%s' normalizes to '%s'", (from: any, expected: any) => {
+    ])("a value '%s' gets normalized", (from: any, expected: any) => {
       // arrange + act
       const actual = utils.normalize(from);
 
