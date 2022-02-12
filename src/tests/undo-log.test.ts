@@ -20,7 +20,7 @@ describe("UndoLog", () => {
   });
 
   afterEach(async () => {
-    connection.close();
+    await connection.close();
   });
 
   test("tables are existing", async () => {

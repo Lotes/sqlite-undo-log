@@ -14,7 +14,7 @@ describe("UndoLogUtils", () => {
   });
 
   afterEach(async () => {
-    connection.close();
+    await connection.close();
   });
     
   describe("createUndoLogTable", () => {

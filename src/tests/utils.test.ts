@@ -14,7 +14,7 @@ describe("utils", () => {
   });
 
   afterEach(async () => {
-    connection.close();
+    await connection.close();
   });
 
   describe("createTable", () => {
