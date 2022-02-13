@@ -103,12 +103,12 @@ describe("UndoLogUtils", () => {
       });
 
       // act
-      await utils.updateChannel(999, "REDOING");
+      await utils.updateChannel(999, "UNDOING");
 
       // assert
       await assertions.assertTableHas<Channel>("undo_channels", {
         id: 999,
-        status: "REDOING",
+        status: "UNDOING",
       });
     });
   });

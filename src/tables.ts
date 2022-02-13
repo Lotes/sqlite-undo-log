@@ -35,7 +35,7 @@ export interface TableDefinition {
 
 
 export type ChangeType = "INSERT"|"DELETE"|"UPDATE";
-export type ChannelStatus = "READY"|"RECORDING"|"UNDOING"|"REDOING";
+export type ChannelStatus = "READY"|"RECORDING"|"UNDOING";
 
 export const Channels: TableDefinition = {
   name: "channels",
@@ -45,7 +45,7 @@ export const Channels: TableDefinition = {
     status: {
       type: "TEXT",
       canBeNull: false,
-      check: "status IN ('READY','RECORDING','UNDOING','REDOING')",
+      check: "status IN ('READY','RECORDING','UNDOING')",
     },
   },
 };

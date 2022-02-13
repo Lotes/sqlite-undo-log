@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="256.25px" preserveAspectRatio="none" style="width:610px;height:256px;" version="1.1" viewBox="0 0 610 256" width="610.9375px" zoomAndPan="magnify"><defs><filter height="300%" id="fv140jjd77j3r" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="3.125"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="6.25" dy="6.25" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--entity Utils--><rect fill="#F8F8F8" filter="url(#fv140jjd77j3r)" height="54.834" style="stroke: #383838; stroke-width: 2.34375;" width="70.3125" x="194.5313" y="184.375"/><rect fill="#F8F8F8" height="7.8125" style="stroke: #383838; stroke-width: 2.34375;" width="15.625" x="186.7188" y="192.1875"/><rect fill="#F8F8F8" height="7.8125" style="stroke: #383838; stroke-width: 2.34375;" width="15.625" x="186.7188" y="223.584"/><text fill="#000000" font-family="sans-serif" font-size="18.75" lengthAdjust="spacingAndGlyphs" textLength="39.0625" x="210.1563" y="219.4641">Utils</text><!--entity Assertions--><rect fill="#F8F8F8" filter="url(#fv140jjd77j3r)" height="54.834" style="stroke: #383838; stroke-width: 2.34375;" width="123.4375" x="72.6563" y="98.4375"/><rect fill="#F8F8F8" height="7.8125" style="stroke: #383838; stroke-width: 2.34375;" width="15.625" x="64.8438" y="106.25"/><rect fill="#F8F8F8" height="7.8125" style="stroke: #383838; stroke-width: 2.34375;" width="15.625" x="64.8438" y="137.6465"/><text fill="#000000" font-family="sans-serif" font-size="18.75" lengthAdjust="spacingAndGlyphs" textLength="92.1875" x="88.2813" y="133.5266">Assertions</text><!--entity UndoLogUtils--><rect fill="#F8F8F8" filter="url(#fv140jjd77j3r)" height="54.834" style="stroke: #383838; stroke-width: 2.34375;" width="150" x="273.4375" y="98.4375"/><rect fill="#F8F8F8" height="7.8125" style="stroke: #383838; stroke-width: 2.34375;" width="15.625" x="265.625" y="106.25"/><rect fill="#F8F8F8" height="7.8125" style="stroke: #383838; stroke-width: 2.34375;" width="15.625" x="265.625" y="137.6465"/><text fill="#000000" font-family="sans-serif" font-size="18.75" lengthAdjust="spacingAndGlyphs" textLength="118.75" x="289.0625" y="133.5266">UndoLogUtils</text><!--entity UndoLogAssertions--><rect fill="#F8F8F8" filter="url(#fv140jjd77j3r)" height="54.834" style="stroke: #383838; stroke-width: 2.34375;" width="203.125" x="9.375" y="12.5"/><rect fill="#F8F8F8" height="7.8125" style="stroke: #383838; stroke-width: 2.34375;" width="15.625" x="1.5625" y="20.3125"/><rect fill="#F8F8F8" height="7.8125" style="stroke: #383838; stroke-width: 2.34375;" width="15.625" x="1.5625" y="51.709"/><text fill="#000000" font-family="sans-serif" font-size="18.75" lengthAdjust="spacingAndGlyphs" textLength="171.875" x="25" y="47.5891">UndoLogAssertions</text><!--entity UndoLogSetup--><rect fill="#F8F8F8" filter="url(#fv140jjd77j3r)" height="54.834" style="stroke: #383838; stroke-width: 2.34375;" width="160.9375" x="267.9688" y="12.5"/><rect fill="#F8F8F8" height="7.8125" style="stroke: #383838; stroke-width: 2.34375;" width="15.625" x="260.1563" y="20.3125"/><rect fill="#F8F8F8" height="7.8125" style="stroke: #383838; stroke-width: 2.34375;" width="15.625" x="260.1563" y="51.709"/><text fill="#000000" font-family="sans-serif" font-size="18.75" lengthAdjust="spacingAndGlyphs" textLength="129.6875" x="283.5938" y="47.5891">UndoLogSetup</text><!--entity UndoLog--><rect fill="#F8F8F8" filter="url(#fv140jjd77j3r)" height="54.834" style="stroke: #383838; stroke-width: 2.34375;" width="110.9375" x="483.5938" y="12.5"/><rect fill="#F8F8F8" height="7.8125" style="stroke: #383838; stroke-width: 2.34375;" width="15.625" x="475.7813" y="20.3125"/><rect fill="#F8F8F8" height="7.8125" style="stroke: #383838; stroke-width: 2.34375;" width="15.625" x="475.7813" y="51.709"/><text fill="#000000" font-family="sans-serif" font-size="18.75" lengthAdjust="spacingAndGlyphs" textLength="79.6875" x="499.2188" y="47.5891">UndoLog</text><!--link Assertions to Utils--><path d="M164.5313,153.5469 C173.5781,161.4063 183.5938,170.1094 193,178.2813 " fill="none" id="Assertions-Utils" style="stroke: #383838; stroke-width: 1.09375;"/><polygon fill="#383838" points="199.4063,183.8438,192.9088,169.8939,193.5157,178.7118,184.6977,179.3187,199.4063,183.8438" style="stroke: #383838; stroke-width: 1.09375;"/><!--link UndoLogUtils to Utils--><path d="M310.8594,153.5469 C298.4844,162.1875 284.625,171.8437 271.9219,180.7031 " fill="none" id="UndoLogUtils-Utils" style="stroke: #383838; stroke-width: 1.09375;"/><polygon fill="#383838" points="265,185.5313,280.1108,182.619,271.4097,181.0646,272.9641,172.3635,265,185.5313" style="stroke: #383838; stroke-width: 1.09375;"/><!--link UndoLogAssertions to Assertions--><path d="M118.3594,67.6094 C120.3594,74.7031 122.5625,82.5 124.6875,89.9688 " fill="none" id="UndoLogAssertions-Assertions" style="stroke: #383838; stroke-width: 1.09375;"/><polygon fill="#383838" points="126.9219,97.9063,129.1219,82.6755,124.8022,90.3868,117.0908,86.067,126.9219,97.9063" style="stroke: #383838; stroke-width: 1.09375;"/><!--link UndoLogSetup to UndoLogUtils--><path d="M348.4375,67.6094 C348.4375,74.7031 348.4375,82.5 348.4375,89.9688 " fill="none" id="UndoLogSetup-UndoLogUtils" style="stroke: #383838; stroke-width: 1.09375;"/><polygon fill="#383838" points="348.4375,97.9063,354.6875,83.8438,348.4375,90.0938,342.1875,83.8438,348.4375,97.9063" style="stroke: #383838; stroke-width: 1.09375;"/><!--link UndoLog to UndoLogUtils--><path d="M483.4063,65.5781 C462.0938,74.8438 437.5313,85.5156 415.2656,95.1875 " fill="none" id="UndoLog-UndoLogUtils" style="stroke: #383838; stroke-width: 1.09375;"/><polygon fill="#383838" points="407.8125,98.4219,423.2006,98.5693,414.9817,95.3174,418.2336,87.0985,407.8125,98.4219" style="stroke: #383838; stroke-width: 1.09375;"/><!--
+@startuml
+skinparam monochrome true
+skinparam ranksep 20
+skinparam dpi 150
+skinparam arrowThickness 0.7
+skinparam packageTitleAlignment left
+skinparam usecaseBorderThickness 0.4
+skinparam defaultFontSize 12
+skinparam rectangleBorderThickness 1
+
+component Utils
+component Assertions
+component UndoLogUtils
+component UndoLogAssertions
+component UndoLogSetup
+component UndoLog
+
+Assertions - -> Utils
+UndoLogUtils - -> Utils
+UndoLogAssertions - -> Assertions
+UndoLogSetup - -> UndoLogUtils
+UndoLog - -> UndoLogUtils
+
+@enduml
+
+PlantUML version 1.2019.06(Fri May 24 19:10:25 CEST 2019)
+(GPL source distribution)
+Java Runtime: Java(TM) SE Runtime Environment
+JVM: Java HotSpot(TM) 64-Bit Server VM
+Java Version: 1.8.0_211-b12
+Operating System: Windows 10
+OS Version: 10.0
+Default Encoding: Cp1252
+Language: de
+Country: DE
+--></g></svg>

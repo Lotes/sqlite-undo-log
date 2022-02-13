@@ -60,8 +60,10 @@ class AdapterDb {
 
 export class ConnectionImpl implements Connection {
   private db: AdapterDb;
-  constructor(db: sqlite.Database) {
+  private debug: boolean;
+  constructor(db: sqlite.Database, debug: boolean = false) {
     this.db = new AdapterDb(db);
+    this.debug = debug;
   }
   escapeString(str: string): string {
     return `'${str.replace(/\'/g, "''")}'`;
@@ -92,6 +94,10 @@ export class ConnectionImpl implements Connection {
     query: string,
     parameters: Parameters = {}
   ): Promise<void> {
+    if(!this.debug) {
+      return Promise.resolve();
+    }
+    
     const where = new Error().stack!;
     await this.db.run(
       `CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY, query TEXT, parameters TEXT, location TEXT)`
