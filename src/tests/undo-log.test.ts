@@ -51,7 +51,7 @@ describe("UndoLog", () => {
       expect(change.type).toBe("INSERT");
       await assertions.assertChangeHasValues(change, "new", {
         id: "1",
-        name: "'one'",
+        name: "one",
         num: "1",
         blob: Buffer.from("juan"),
         zero: "0.0",
@@ -76,7 +76,7 @@ describe("UndoLog", () => {
       expect(change.type).toBe("DELETE");
       await assertions.assertChangeHasValues(change, "old", {
         id: "1",
-        name: "'one'",
+        name: "one",
         num: "1",
         blob: Buffer.from("juan"),
         zero: "0.0",
@@ -107,11 +107,11 @@ describe("UndoLog", () => {
       const [change] = await assertions.assertActionHasChanges(action, 1);
       expect(change.type).toBe("UPDATE");
       await assertions.assertChangeHasValues(change, "new", {
-        name: "'TADAA'",
+        name: "TADAA",
         zero: "1.0",
       });
       await assertions.assertChangeHasValues(change, "old", {
-        name: "'one'",
+        name: "one",
         zero: "0.0",
       });
     });

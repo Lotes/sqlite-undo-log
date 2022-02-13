@@ -5,7 +5,7 @@ import {
   ForeignKey,
   SqliteColumnDefinition,
 } from "../tables";
-import { Utils } from "../utils";
+import { ColumnValue, Utils } from "../utils";
 
 export interface PragmaTableInfo {
   cid: number;
@@ -226,5 +226,23 @@ export class UtilsImpl implements Utils {
       return leftBuffer.equals(rightBuffer);
     }
     return lhs == rhs;
+  }
+
+  unquote(values: Record<string, ColumnValue>): Record<string, any> {
+    let result: Record<string, any> = {};
+    Object.entries(values).forEach(entry => {
+      const [name, {value, type}] = entry;
+      switch(type) {
+        case "TEXT": result = {...result, [name]: this.unquoteText(value)}; break; 
+        case "REAL": result = {...result, [name]: parseFloat(value)}; break; 
+        case "NUMERIC": result = {...result, [name]: parseFloat(value)}; break; 
+        case "INTEGER": result = {...result, [name]: parseInt(value)}; break; 
+        case "BLOB": result = {...result, [name]: value}; break; 
+      }
+    });
+    return result;
+  }
+  private unquoteText(value: string): string {
+    return value.substr(1, value.length-2).replace(/''/g, "'");
   }
 }

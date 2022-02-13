@@ -109,10 +109,12 @@ export class UndoLogImpl implements UndoLog {
   }
   private async undoDeletion(table: Table, change: Change) {
     const values = await this.utils.getValuesOfChange(change, "old");
-    await this.utils.insertIntoTable(table.name, values);
+    const unquotedValues = this.utils.unquote(values);
+    await this.utils.insertIntoTable(table.name, unquotedValues);
   }
   private async undoUpdate(table: Table, change: Change) {
     const values = await this.utils.getValuesOfChange(change, "old");
-    await this.utils.updateTable(table.name, change.new_row_id, values);
+    const unquotedValues = this.utils.unquote(values);
+    await this.utils.updateTable(table.name, change.new_row_id, unquotedValues);
   }
 }

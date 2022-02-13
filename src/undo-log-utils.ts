@@ -5,14 +5,7 @@ import {
   Change,
   Channel,
 } from "./tables";
-import { Utils } from "./utils";
-
-export type OldOrNew = "old"|"new";
-
-export interface NameValuePair {
-  name: string;
-  value: string;
-}
+import { ColumnValue, OldOrNew, Utils } from "./utils";
 
 export interface UndoLogUtils extends Utils {
   //tables
@@ -42,5 +35,5 @@ export interface UndoLogUtils extends Utils {
   getValuesOfChange(
     change: Change,
     type: OldOrNew
-  ): Promise<Record<string, any>>;
+  ): Promise<Record<string, ColumnValue>>;
 }

@@ -1,7 +1,16 @@
 import { Connection } from "../sqlite3";
-import { TableDefinition, Action, ChannelStatus, Change, Channel } from "../tables";
+import {
+  TableDefinition,
+  Action,
+  ChannelStatus,
+  Change,
+  Channel,
+} from "../tables";
 import { UndoLogError } from "../undo-log";
-import { NameValuePair, OldOrNew, UndoLogUtils } from "../undo-log-utils";
+import {
+  UndoLogUtils,
+} from "../undo-log-utils";
+import { OldOrNew, ColumnValue, NameValueType } from "../utils";
 import { UtilsImpl } from "./utils";
 
 export class UndoLogUtilsImpl extends UtilsImpl implements UndoLogUtils {
@@ -17,10 +26,13 @@ export class UndoLogUtilsImpl extends UtilsImpl implements UndoLogUtils {
   async markActionAsUndone(actionId: number, undone: boolean): Promise<void> {
     this.updateUndoLogTable<Action>("actions", {
       id: actionId,
-      undone
+      undone,
     });
   }
-  async insertIntoUndoLogTable<T extends Record<string, any>>(tableName: string, row: T): Promise<void> {
+  async insertIntoUndoLogTable<T extends Record<string, any>>(
+    tableName: string,
+    row: T
+  ): Promise<void> {
     await this.insertIntoTable<T>(`${this.prefix}${tableName}`, row);
   }
   async createUndoLogTable(tableName: string, definition: TableDefinition) {
@@ -43,26 +55,36 @@ export class UndoLogUtilsImpl extends UtilsImpl implements UndoLogUtils {
     if (row == null) {
       throw new UndoLogError(`Unable to create or get a channel '${channel}'.`);
     }
-    if (row.status !== "READY")  {
-      throw new UndoLogError(`Expected channel '${channel}' to have status 'READY', but was '${row.status}'.`);
+    if (row.status !== "READY") {
+      throw new UndoLogError(
+        `Expected channel '${channel}' to have status 'READY', but was '${row.status}'.`
+      );
     }
   }
 
-  async updateUndoLogTable<T extends Record<string, any> & {id: number}>(tableName: string, data: Partial<T>& {id: number}): Promise<void> {
+  async updateUndoLogTable<T extends Record<string, any> & { id: number }>(
+    tableName: string,
+    data: Partial<T> & { id: number }
+  ): Promise<void> {
     const [parameters, tail] = this.toParameterList(data);
-    const query = `UPDATE ${this.prefix}${tableName} SET ${tail.join(", ")} WHERE id=$id`;
+    const query = `UPDATE ${this.prefix}${tableName} SET ${tail.join(
+      ", "
+    )} WHERE id=$id`;
     await this.connection.run(query, parameters);
   }
 
   async updateChannel(channelId: number, status: ChannelStatus) {
     await this.updateUndoLogTable<Channel>("channels", {
       id: channelId,
-      status
+      status,
     });
   }
 
-  async getChannel(channelId: number): Promise<Channel|null> {
-    return await this.connection.getSingle<Channel>(`SELECT * FROM ${this.prefix}channels WHERE id=$channelId`, {$channelId: channelId});
+  async getChannel(channelId: number): Promise<Channel | null> {
+    return await this.connection.getSingle<Channel>(
+      `SELECT * FROM ${this.prefix}channels WHERE id=$channelId`,
+      { $channelId: channelId }
+    );
   }
 
   async getActionsOfChannel(channel: Channel): Promise<Action[]> {
@@ -73,7 +95,7 @@ export class UndoLogUtilsImpl extends UtilsImpl implements UndoLogUtils {
       ORDER BY a.order_index DESC
     `;
     const parameters = {
-      $channelId: channel.id
+      $channelId: channel.id,
     };
     return await this.connection.getAll<Action>(query, parameters);
   }
@@ -86,25 +108,40 @@ export class UndoLogUtilsImpl extends UtilsImpl implements UndoLogUtils {
       ORDER BY ch.order_index
     `;
     const parameters = {
-      $actionId: action.id
+      $actionId: action.id,
     };
     return await this.connection.getAll<Change>(query, parameters);
   }
 
-  async getValuesOfChange(change: Change, type: OldOrNew): Promise<Record<string, any>> {
+  async getValuesOfChange(
+    change: Change,
+    type: OldOrNew
+  ): Promise<Record<string, ColumnValue>> {
     const query = `
-      SELECT c.name, v.${type}_value AS value
+      SELECT c.name, v.${type}_value AS value, c.type
       FROM ${this.prefix}values v
         INNER JOIN ${this.prefix}columns c
         ON v.column_id=c.id
       WHERE v.change_id=$changeId
     `;
     const parameters = {
-      $changeId: change.id
+      $changeId: change.id,
     };
-    const nameValues = await this.connection.getAll<NameValuePair>(query, parameters);
+    const nameValues = await this.connection.getAll<NameValueType>(
+      query,
+      parameters
+    );
     let record = {};
-    nameValues.forEach(nv => record = {...record, [nv.name]: nv.value});
+    nameValues.forEach(
+      (nv) =>
+        (record = {
+          ...record,
+          [nv.name]: {
+            value: nv.value,
+            type: nv.type,
+          },
+        })
+    );
     return record;
   }
 }

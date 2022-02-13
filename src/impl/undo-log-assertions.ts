@@ -1,6 +1,7 @@
 import { Action, Change, Channel, ChannelStatus } from "../tables";
 import { UndoLogAssertions } from "../undo-log-assertions";
-import { OldOrNew, UndoLogUtils } from "../undo-log-utils";
+import { UndoLogUtils } from "../undo-log-utils";
+import { OldOrNew } from "../utils";
 import { AssertionsImpl } from "./assertions";
 
 export class UndoLogAssertionsImpl extends AssertionsImpl implements UndoLogAssertions {
@@ -33,7 +34,8 @@ export class UndoLogAssertionsImpl extends AssertionsImpl implements UndoLogAsse
   }
   
   async assertChangeHasValues<T extends Record<string, any>>(change: Change, type: OldOrNew, expected: Partial<T>): Promise<void> {
-    const actual = await this.undoLogUtils.getValuesOfChange(change, type);
+    const quotedActual = await this.undoLogUtils.getValuesOfChange(change, type);
+    const actual = this.undoLogUtils.unquote(quotedActual);
     const expectedNames = Object.getOwnPropertyNames(expected);
     const errors: string[] = [];
     expectedNames.forEach(n => {

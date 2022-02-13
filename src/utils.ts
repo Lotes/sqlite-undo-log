@@ -1,4 +1,20 @@
-import { TableColumn, TableDefinition } from "./tables";
+import { SqliteType, TableColumn, TableDefinition } from "./tables";
+
+export type OldOrNew = "old"|"new";
+
+export interface NameValuePair {
+  name: string;
+  value: string;
+}
+
+export interface ColumnValue {
+  value: string;
+  type: SqliteType;
+}
+
+export interface NameValueType extends ColumnValue {
+  name: string;
+}
 
 export interface Utils {
   createTable(tableName: string, tableDef: TableDefinition): Promise<void>;
@@ -22,4 +38,5 @@ export interface Utils {
   deleteFromTable(tableName: string, id: number): Promise<void>;
   normalize(arg: any): any;
   equals(left: any, right: any): boolean;
+  unquote(values: Record<string, ColumnValue>): Record<string, any>;
 }
