@@ -149,5 +149,24 @@ describe("UndoLog", () => {
       // assert
       await assertions.assertTableHas("all_types", AllTypeTable.Values[0]);
     });
+
+    test("update works", async () => {
+      // arrange
+      await utils.createTable("all_types", AllTypeTable.Definition);
+      await utils.insertIntoTable("all_types", AllTypeTable.Values[0]);
+      await setup.addTable("all_types", 0);
+      await log.recordWithin(0, undefined, async () => {
+        await utils.updateTable<AllTypeTable.Row>("all_types", AllTypeTable.Values[0].id, {
+          blob: Buffer.from("it lives"),
+          num: 333
+        });
+      });
+
+      // act
+      await log.undo(0);
+
+      // assert
+      await assertions.assertTableHas("all_types", AllTypeTable.Values[0]);
+    });
   });
 });

@@ -5,6 +5,7 @@ import {
   ForeignKey,
   SqliteColumnDefinition,
 } from "../tables";
+import { UndoLogError } from "../undo-log";
 import { ColumnValue, Utils } from "../utils";
 
 export interface PragmaTableInfo {
@@ -237,10 +238,21 @@ export class UtilsImpl implements Utils {
         case "REAL": result = {...result, [name]: parseFloat(value)}; break; 
         case "NUMERIC": result = {...result, [name]: parseFloat(value)}; break; 
         case "INTEGER": result = {...result, [name]: parseInt(value)}; break; 
-        case "BLOB": result = {...result, [name]: value}; break; 
+        case "BLOB": result = {...result, [name]: this.unquoteBlob(value)}; break;
+        default: throw new UndoLogError(`Unknown type '${type}' for unquoting.`)
       }
     });
     return result;
+  }
+  private unquoteBlob(value: string): Buffer {
+    const matchHex = /^X'([^']+)'$/.exec(value);
+    if(matchHex != null) {
+      return Buffer.from(matchHex[1],  "hex");
+    }
+    if(/^('[.+]')$/.test(value)) {
+      return Buffer.from(this.unquoteText(value));
+    }
+    throw new UndoLogError("Unable to unquote blob!");
   }
   private unquoteText(value: string): string {
     return value.substr(1, value.length-2).replace(/''/g, "'");
