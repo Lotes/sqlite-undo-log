@@ -69,26 +69,26 @@ export class ConnectionImpl implements Connection {
     return `'${str.replace(/\'/g, "''")}'`;
   }
   async close(): Promise<void> {
-    await this.db.close();
+    return this.db.close();
   }
   async execute(query: string): Promise<void> {
     await this.track(query);
-    await this.db.exec(query);
+    return this.db.exec(query);
   }
   async run(query: string, parameters?: Parameters): Promise<RunResult> {
     await this.track(query, parameters);
-    return await this.db.run(query, parameters);
+    return this.db.run(query, parameters);
   }
   async getSingle<T>(
     query: string,
     parameters?: Parameters
   ): Promise<T | null> {
     await this.track(query, parameters);
-    return await this.db.get<T>(query, parameters);
+    return this.db.get<T>(query, parameters);
   }
   async getAll<T>(query: string, parameters?: Parameters): Promise<T[]> {
     await this.track(query, parameters);
-    return await this.db.all<T>(query, parameters);
+    return this.db.all<T>(query, parameters);
   }
   private async track(
     query: string,
@@ -115,8 +115,10 @@ export class ConnectionImpl implements Connection {
 
 export class DatabaseImpl implements Database {
   private fileName: string;
-  constructor(fileName?: string) {
+  private debug: boolean;
+  constructor(fileName?: string, debug?: boolean) {
     this.fileName = fileName || ":memory:";
+    this.debug = debug ?? false;
   }
   connect(): Promise<Connection> {
     return new Promise((resolve, reject) => {
@@ -125,7 +127,7 @@ export class DatabaseImpl implements Database {
         sqlite.OPEN_READWRITE | sqlite.OPEN_CREATE,
         async (err) => {
           if (err == null) {
-            const connection: Connection = new ConnectionImpl(db);
+            const connection: Connection = new ConnectionImpl(db, this.debug);
             connection
               .execute("PRAGMA foreignKeys=1")
               .then(() => resolve(connection))

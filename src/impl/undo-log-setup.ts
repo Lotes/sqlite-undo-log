@@ -91,10 +91,15 @@ export class UndoLogSetupImpl implements UndoLogSetup {
         )
       GROUP BY a.id;
     `;
-    const queryAddValues = (recordOld: boolean, recordNew: boolean) => `
-      INSERT INTO ${this.prefix}values (column_id, change_id${recordOld ? ", old_value" : ""}${recordNew ? ", new_value" : ""})
-      ${columns.map((c) => `SELECT ${c.id}, last_insert_rowid()${recordOld ? `, quote(OLD.${c.name})` : ""}${recordNew ? `, quote(NEW.${c.name})`: ""}`).join(" UNION ")};
-    `;
+    const queryAddValues = (recordOld: boolean, recordNew: boolean) => {
+      const oldValue = (c: TableColumn) => recordOld ? `, quote(OLD.${c.name})` : "";
+      const newValue = (c: TableColumn) => recordNew ? `, quote(NEW.${c.name})`: "";
+      const oldColumn = recordOld ? ", old_value" : "";
+      const newColumn = recordNew ? ", new_value" : "";
+      return `
+      INSERT INTO ${this.prefix}values (column_id, change_id${oldColumn}${newColumn})
+      ${columns.map((c) => `SELECT ${c.id}, last_insert_rowid()${oldValue(c)}${newValue(c)}`).join(" UNION ")};
+    `};
     const queryTrigger = `
       CREATE TRIGGER ${type.toLowerCase()}_${tableName}_trigger
         ${type === "DELETE" ? "BEFORE" : "AFTER"} ${type} ON ${tableName}

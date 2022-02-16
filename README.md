@@ -19,7 +19,7 @@ An undo log for SQLite 3
 First, get all needed concepts...
 
 ```typescript
-const database: Database = new DatabaseImpl(":memory:");
+const database = new DatabaseImpl(":memory:");
 const connection = await database.connect();
 const utils = new UndoLogUtilsImpl(connection);
 const setup = new UndoLogSetupImpl(connection, utils);

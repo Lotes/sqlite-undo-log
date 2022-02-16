@@ -51,7 +51,7 @@ export async function setupBeforeEach() {
     "output",
     expect.getState().currentTestName.replace(/\s+/g, "_") + ".sqlite3"
   );
-  const database: Database = new DatabaseImpl(fileName);
+  const database = new DatabaseImpl(fileName, true);
   const connection = await database.connect();
   const utils = new UndoLogUtilsImpl(connection);
   const setup = new UndoLogSetupImpl(connection, utils);

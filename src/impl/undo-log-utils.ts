@@ -81,7 +81,7 @@ export class UndoLogUtilsImpl extends UtilsImpl implements UndoLogUtils {
   }
 
   async getChannel(channelId: number): Promise<Channel | null> {
-    return await this.connection.getSingle<Channel>(
+    return this.connection.getSingle<Channel>(
       `SELECT * FROM ${this.prefix}channels WHERE id=$channelId`,
       { $channelId: channelId }
     );
@@ -97,7 +97,7 @@ export class UndoLogUtilsImpl extends UtilsImpl implements UndoLogUtils {
     const parameters = {
       $channelId: channel.id,
     };
-    return await this.connection.getAll<Action>(query, parameters);
+    return this.connection.getAll<Action>(query, parameters);
   }
 
   async getChangesOfAction(action: Action): Promise<Change[]> {
@@ -110,7 +110,7 @@ export class UndoLogUtilsImpl extends UtilsImpl implements UndoLogUtils {
     const parameters = {
       $actionId: action.id,
     };
-    return await this.connection.getAll<Change>(query, parameters);
+    return this.connection.getAll<Change>(query, parameters);
   }
 
   async getValuesOfChange(

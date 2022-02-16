@@ -65,7 +65,7 @@ export class UtilsImpl implements Utils {
       return null;
     }
     if (value instanceof Buffer) {
-      const buffer = value as Buffer;
+      const buffer = value;
       return `X'${buffer.toString("hex")}'`;
     }
     return value;
@@ -120,40 +120,38 @@ export class UtilsImpl implements Utils {
   }
 
   protected createForeignKeys(definition: TableDefinition, prefix: string) {
+    function createOnDelete(f: ForeignKey) {
+      return f.onDelete === "CASCADE"
+        ? "ON DELETE CASCADE"
+        : f.onDelete === "SET_NULL"
+        ? "ON DELETE SET NULL"
+        : "";
+    }
     const foreignFunc = (n: string, f: ForeignKey) =>
       `FOREIGN KEY(${n}) REFERENCES ${prefix}${f.referencedTable}(${
         f.column
-      }) ${
-        f.onDelete === "CASCADE"
-          ? "ON DELETE CASCADE"
-          : f.onDelete === "SET_NULL"
-          ? "ON DELETE SET NULL"
-          : ""
-      }`;
-    const foreigns =
-      definition.foreignKeys != null
-        ? "," +
+      }) ${createOnDelete(f)}`;
+    return definition.foreignKeys != null
+      ? "," +
           Object.getOwnPropertyNames(definition.foreignKeys)
             .map((fk) => {
               return foreignFunc(fk, definition.foreignKeys![fk]);
             })
             .join(", ")
-        : "";
-    return foreigns;
+      : "";
   }
 
   protected createColumnDefinitions(definition: TableDefinition) {
     return Object.getOwnPropertyNames(definition.columns).map((n) => {
-      const xxx = definition.columns[n];
-      const def =
-        typeof xxx == "string"
-          ? { type: xxx }
-          : (xxx as SqliteColumnDefinition);
+      const column = definition.columns[n];
+      const def = typeof column == "string" ? { type: column } : column;
       const pk = definition.primaryKey.indexOf(n) > -1;
       const ai = pk ? "PRIMARY KEY AUTOINCREMENT" : "";
       const nn = !pk && def.canBeNull === false;
       const ch = def.check != null ? `CHECK(${def.check})` : "";
-      return `${n} ${def.type} ${!pk ? (nn ? "NOT NULL" : "NULL") : ai} ${ch}`;
+      const nll = nn ? "NOT NULL" : "NULL";
+      const cl = !pk ? nll : ai;
+      return `${n} ${def.type} ${cl} ${ch}`;
     });
   }
 
@@ -183,7 +181,7 @@ export class UtilsImpl implements Utils {
       return [false, errors];
     }
     Object.getOwnPropertyNames(expected).forEach((n) => {
-      if(!this.equals(expected[n], actual[n])) {
+      if (!this.equals(expected[n], actual[n])) {
         errors.push(
           `Expected table '${tableName}' to have a row with the property '${n}' set to '${expected[n]}', but '${actual[n]}' was given.`
         );
@@ -199,62 +197,68 @@ export class UtilsImpl implements Utils {
   }
 
   normalize(arg: any): any {
-    switch (typeof arg) {
-      case "string": {
-        if (/^\d+(\.\d+)?$/.test(arg)) {
-          return parseFloat(arg);
-        }
-        const asStringLiteral = /^'([^']*)'$/gi.exec(arg);
-        if (asStringLiteral != null) {
-          return asStringLiteral[1].substr(1, asStringLiteral[1].length - 2);
-        }
-        const asBufferLiteral = /^X'([0-9A-F]+)'$/gi.exec(arg);
-        if (asBufferLiteral != null) {
-          return Buffer.from(asBufferLiteral[1], "hex");
-        }
+    if (typeof arg === "string") {
+      if (/^\d+(\.\d+)?$/.test(arg)) {
+        return parseFloat(arg);
       }
-      default:
-        return arg;
+      const asStringLiteral = /^'([^']*)'$/gi.exec(arg);
+      if (asStringLiteral != null) {
+        return asStringLiteral[1].substr(1, asStringLiteral[1].length - 2);
+      }
+      const asBufferLiteral = /^X'([0-9A-F]+)'$/gi.exec(arg);
+      if (asBufferLiteral != null) {
+        return Buffer.from(asBufferLiteral[1], "hex");
+      }
     }
+    return arg;
   }
 
   equals(left: any, right: any) {
     const lhs = this.normalize(left);
     const rhs = this.normalize(right);
     if (lhs instanceof Buffer && rhs instanceof Buffer) {
-      const leftBuffer = lhs as Buffer;
-      const rightBuffer = rhs as Buffer;
-      return leftBuffer.equals(rightBuffer);
+      return lhs.equals(rhs);
     }
     return lhs == rhs;
   }
 
   unquote(values: Record<string, ColumnValue>): Record<string, any> {
     let result: Record<string, any> = {};
-    Object.entries(values).forEach(entry => {
-      const [name, {value, type}] = entry;
-      switch(type) {
-        case "TEXT": result = {...result, [name]: this.unquoteText(value)}; break; 
-        case "REAL": result = {...result, [name]: parseFloat(value)}; break; 
-        case "NUMERIC": result = {...result, [name]: parseFloat(value)}; break; 
-        case "INTEGER": result = {...result, [name]: parseInt(value)}; break; 
-        case "BLOB": result = {...result, [name]: this.unquoteBlob(value)}; break;
-        default: throw new UndoLogError(`Unknown type '${type}' for unquoting.`)
+    Object.entries(values).forEach((entry) => {
+      const [name, { value, type }] = entry;
+      switch (type) {
+        case "TEXT":
+          result = { ...result, [name]: this.unquoteText(value) };
+          break;
+        case "REAL":
+          result = { ...result, [name]: parseFloat(value) };
+          break;
+        case "NUMERIC":
+          result = { ...result, [name]: parseFloat(value) };
+          break;
+        case "INTEGER":
+          result = { ...result, [name]: parseInt(value) };
+          break;
+        case "BLOB":
+          result = { ...result, [name]: this.unquoteBlob(value) };
+          break;
+        default:
+          throw new UndoLogError(`Unknown type '${type}' for unquoting.`);
       }
     });
     return result;
   }
   private unquoteBlob(value: string): Buffer {
     const matchHex = /^X'([^']+)'$/.exec(value);
-    if(matchHex != null) {
-      return Buffer.from(matchHex[1],  "hex");
+    if (matchHex != null) {
+      return Buffer.from(matchHex[1], "hex");
     }
-    if(/^('[.+]')$/.test(value)) {
+    if (/^('[.+]')$/.test(value)) {
       return Buffer.from(this.unquoteText(value));
     }
     throw new UndoLogError("Unable to unquote blob!");
   }
   private unquoteText(value: string): string {
-    return value.substr(1, value.length-2).replace(/''/g, "'");
+    return value.substr(1, value.length - 2).replace(/''/g, "'");
   }
 }
