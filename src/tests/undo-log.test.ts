@@ -38,7 +38,7 @@ describe("UndoLog", () => {
       // arrange
       await utils.createTable("all_types", AllTypeTable.Definition);
       await setup.addTable("all_types", 0);
-
+      
       // act
       await log.recordWithin(0, undefined, async () => {
         await utils.insertIntoTable("all_types", AllTypeTable.Values[0]);

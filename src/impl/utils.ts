@@ -2,8 +2,7 @@ import { Connection, Parameters } from "../sqlite3";
 import {
   TableColumn,
   TableDefinition,
-  ForeignKey,
-  SqliteColumnDefinition,
+  ForeignKey
 } from "../tables";
 import { UndoLogError } from "../undo-log";
 import { ColumnValue, Utils } from "../utils";
@@ -121,11 +120,11 @@ export class UtilsImpl implements Utils {
 
   protected createForeignKeys(definition: TableDefinition, prefix: string) {
     function createOnDelete(f: ForeignKey) {
-      return f.onDelete === "CASCADE"
-        ? "ON DELETE CASCADE"
-        : f.onDelete === "SET_NULL"
-        ? "ON DELETE SET NULL"
-        : "";
+      switch(f.onDelete) {
+        case "CASCADE": return "ON DELETE CASCADE";
+        case "SET_NULL": return "ON DELETE SET NULL";
+        default: return "";
+      }
     }
     const foreignFunc = (n: string, f: ForeignKey) =>
       `FOREIGN KEY(${n}) REFERENCES ${prefix}${f.referencedTable}(${
