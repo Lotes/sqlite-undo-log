@@ -1,3 +1,4 @@
+import { unreachableCase } from "ts-assert-unreachable";
 import { Connection, Parameters } from "../sqlite3";
 import {
   TableColumn,
@@ -58,18 +59,7 @@ export class UtilsImpl implements Utils {
       ) > -1
     );
   }
-
-  unbuffer(value: any) {
-    if (value == null) {
-      return null;
-    }
-    if (value instanceof Buffer) {
-      const buffer = value;
-      return `X'${buffer.toString("hex")}'`;
-    }
-    return value;
-  }
-
+  
   async insertIntoTable<T extends Record<string, any>>(name: string, row: T) {
     const columns: string[] = [];
     let parameters = {};
@@ -242,7 +232,7 @@ export class UtilsImpl implements Utils {
           result = { ...result, [name]: this.unquoteBlob(value) };
           break;
         default:
-          throw new UndoLogError(`Unknown type '${type}' for unquoting.`);
+          unreachableCase(type, `Unknown type '${type}' for unquoting.`);
       }
     });
     return result;
