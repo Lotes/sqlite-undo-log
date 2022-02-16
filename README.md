@@ -1,6 +1,7 @@
 # sqlite-undo-log
 
 [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=Lotes_sqlite-undo-log&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=Lotes_sqlite-undo-log)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Lotes_sqlite-undo-log&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Lotes_sqlite-undo-log)
 [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=Lotes_sqlite-undo-log&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=Lotes_sqlite-undo-log)
 [![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=Lotes_sqlite-undo-log&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=Lotes_sqlite-undo-log)
 
