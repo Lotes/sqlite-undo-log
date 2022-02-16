@@ -75,12 +75,10 @@ export class UndoLogSetupImpl implements UndoLogSetup {
       `;
   }
 
-  private async createTrigger(
-    type: ChangeType,
-    tableName: string,
-    columns: TableColumn[]
-  ) {
-    const queryAddChange = (recordOld: boolean, recordNew: boolean) => `
+  private queryAddChange(type: ChangeType, tableName: string): string {
+    const recordOld = type !== "INSERT";
+    const recordNew = type !== "DELETE";
+    return `
       INSERT INTO ${
         this.prefix
       }changes (type, old_row_id, new_row_id, action_id, order_index, table_id)
@@ -101,41 +99,52 @@ export class UndoLogSetupImpl implements UndoLogSetup {
         )
       GROUP BY a.id;
     `;
-    const queryAddValues = (recordOld: boolean, recordNew: boolean) => {
-      const oldValue = (c: TableColumn) =>
-        recordOld ? `, quote(OLD.${c.name})` : "";
-      const newValue = (c: TableColumn) =>
-        recordNew ? `, quote(NEW.${c.name})` : "";
-      const where = (c: TableColumn) => {
-        const notEqual = recordOld && recordNew
-          ? ` AND OLD.${c.name} <> NEW.${c.name}`
-          : "";
-        return `WHERE id=${c.id}${notEqual}`;
-      };
-      const createSelect = (c: TableColumn) =>
-        `SELECT ${c.id}, last_insert_rowid()${oldValue(c)}${newValue(c)} FROM ${
-          this.prefix
-        }columns ${where(c)}`;
-      const oldColumn = recordOld ? ", old_value" : "";
-      const newColumn = recordNew ? ", new_value" : "";
-      return `
+  }
+
+  private queryAddValues(type: ChangeType, columns: TableColumn[]) {
+    const recordOld = type !== "INSERT";
+    const recordNew = type !== "DELETE";
+    const oldValue = (c: TableColumn) =>
+      recordOld ? `, quote(OLD.${c.name})` : "";
+    const newValue = (c: TableColumn) =>
+      recordNew ? `, quote(NEW.${c.name})` : "";
+    const where = (c: TableColumn) => {
+      const notEqual =
+        recordOld && recordNew ? ` AND OLD.${c.name} <> NEW.${c.name}` : "";
+      return `WHERE id=${c.id}${notEqual}`;
+    };
+    const createSelect = (c: TableColumn) =>
+      `SELECT ${c.id}, last_insert_rowid()${oldValue(c)}${newValue(c)} FROM ${
+        this.prefix
+      }columns ${where(c)}`;
+    const oldColumn = recordOld ? ", old_value" : "";
+    const newColumn = recordNew ? ", new_value" : "";
+    return `
       INSERT INTO ${
         this.prefix
       }values (column_id, change_id${oldColumn}${newColumn})
       ${columns.map(createSelect).join("\r\n      UNION ")};
     `;
-    };
+  }
+
+  private async createTrigger(
+    type: ChangeType,
+    tableName: string,
+    columns: TableColumn[]
+  ) {
     const queryTrigger = `
       CREATE TRIGGER ${type.toLowerCase()}_${tableName}_trigger
         ${type === "DELETE" ? "BEFORE" : "AFTER"} ${type} ON ${tableName}
         FOR EACH ROW
         WHEN (${this.queryIsTablesChannelStatusEqRecording(tableName)})
       BEGIN
-        ${queryAddChange(type !== "INSERT", type !== "DELETE")}
-        ${queryAddValues(type !== "INSERT", type !== "DELETE")}
-      END;`;
-    await this.connection.execute(queryTrigger);
+        ${this.queryAddChange(type, tableName)}
+        ${this.queryAddValues(type, columns)}
+      END;
+    `;
+    return this.connection.execute(queryTrigger);
   }
+
   async removeTable(name: string): Promise<void> {
     await this.connection.run(
       `DELETE FROM ${this.prefix}tables WHERE name=$name`,
