@@ -54,4 +54,8 @@ await log.undo(0 /*channel name*/ );
 * [ ] Redo
     * [ ] Respect undone flag
 * [ ] Complex scenarios
+    * [ ] Foreign keys
+    * [ ] Triggers
+    * [ ] Order relevant
+    * [ ] Multiple undos and redos
 * [ ] Cleanup triggers
