@@ -50,12 +50,16 @@ await log.undo(0 /*channel name*/ );
 ## File dependencies
 ![](docs/architecture.svg)
 
-## TODO
-* [ ] Redo
+## Plans
+* [ ] add adapters for other SQLite implementations
+* [ ] add user-friendly API
+  * [ ] get back deltas, changed entity ids
+  * [ ] a own type system
+  * [ ] add redo support
     * [ ] Respect undone flag
-* [ ] Complex scenarios
+* [ ] Complex test scenarios
     * [ ] Foreign keys
     * [ ] Triggers
     * [ ] Order relevant
+    * [ ] Composite keys
     * [ ] Multiple undos and redos
-* [ ] Cleanup triggers
