@@ -1,4 +1,10 @@
-import { InitializeOptions, LogOptions, StartOptions, UndoLogConstructorOptions, UndoLogPublic, UndoLogSetupPublic } from "..";
+import {
+  InitializeMultipleOptions,
+  InitializeMultipleResult,
+  UndoLogConstructorOptions,
+  UndoLogPublic,
+  UndoLogSetupPublic,
+} from "..";
 import { Connection } from "../sqlite3";
 import { UndoLogSetupImpl } from "./undo-log-setup";
 import { UndoLogUtilsImpl } from "./undo-log-utils";
@@ -8,66 +14,88 @@ import { UndoLogUtils } from "../undo-log-utils";
 import { UndoLog } from "../undo-log";
 
 export class UndoLogSetupPublicImpl implements UndoLogSetupPublic {
-  private connection: Connection;
-  constructor(connection: Connection) {
-    this.connection = connection;
+  private utils: UndoLogUtilsImpl;
+  private setup: UndoLogSetupImpl;
+  constructor(private connection: Connection, private tablePrefix = "undo_") {
+    this.utils = new UndoLogUtilsImpl(this.connection, this.tablePrefix);
+    this.setup = new UndoLogSetupImpl(
+      this.connection,
+      this.utils,
+      this.tablePrefix
+    );
   }
-  async initialize({
-    excludedTableNames = [],
-    tablePrefix = "undo_",
-    channelId = 0,
-  }: InitializeOptions): Promise<UndoLogPublic> {
-    const utils = new UndoLogUtilsImpl(this.connection, tablePrefix);
-    const setup = new UndoLogSetupImpl(this.connection, utils, tablePrefix);
-    
-    const logTableNames = await setup.install();
-    
-    const tables = _.difference(await utils.getAllTableNames(), logTableNames, excludedTableNames);
-    tables.forEach(n => setup.addTable(n, channelId));
-
-    return new UndoLogPublicImpl(this.connection, utils, {tablePrefix, defaultChannelId: channelId});
+  async initializeMultiple(
+    options: InitializeMultipleOptions
+  ): Promise<InitializeMultipleResult> {
+    await this.setup.install();
+    const result: InitializeMultipleResult = {};
+    for (const [key, value] of Object.entries(options)) {
+      const channelId = typeof key === "number" ? key : parseInt(key, 10);
+      const tables = typeof value === "string" ? [value] : value;
+      for (const tableName of tables) {
+        await this.setup.addTable(tableName, channelId);
+      }
+      result[channelId] = new UndoLogPublicImpl(this.connection, this.utils, {
+        channelId,
+        tablePrefix: this.tablePrefix,
+      });
+    }
+    return result;
+  }
+  async initializeSingle(channelId: number): Promise<UndoLogPublic> {
+    const logTableNames = await this.setup.install();
+    const tables = _.difference(
+      await this.utils.getAllTableNames(),
+      logTableNames
+    );
+    tables.forEach((n) => this.setup.addTable(n, channelId));
+    return new UndoLogPublicImpl(this.connection, this.utils, {
+      tablePrefix: this.tablePrefix,
+      channelId,
+    });
   }
 }
 
 export class UndoLogPublicImpl implements UndoLogPublic {
-  private defaultChannelId: number;
+  private channelId: number;
   private undoLog: UndoLog;
-  constructor(connection: Connection, utils: UndoLogUtils, {defaultChannelId = 0, tablePrefix}: UndoLogConstructorOptions) {
-    this.defaultChannelId = defaultChannelId;
+  constructor(
+    connection: Connection,
+    utils: UndoLogUtils,
+    { channelId, tablePrefix }: UndoLogConstructorOptions
+  ) {
+    this.channelId = channelId;
     this.undoLog = new UndoLogImpl(connection, utils, tablePrefix);
   }
-  private startTracking(options?: StartOptions | undefined): Promise<void> {
-    options = {channelId: this.defaultChannelId, ...options} as StartOptions; 
-    return this.undoLog.startTracking(options.channelId, options.category);
+  private startTracking(category?: string): Promise<void> {
+    return this.undoLog.startTracking(this.channelId, category);
   }
-  private stopTracking(options?: LogOptions | undefined): Promise<void> {
-    options = {channelId: this.defaultChannelId, ...options} as LogOptions; 
-    return this.undoLog.startTracking(options.channelId);
+  private stopTracking(): Promise<void> {
+    return this.undoLog.startTracking(this.channelId);
   }
-  async trackWithin(action: () => Promise<void>, options?: StartOptions | undefined): Promise<void> {
-    await this.startTracking(options);
+  async trackWithin(
+    action: () => Promise<void>,
+    category?: string
+  ): Promise<void> {
+    await this.startTracking(category);
     try {
       await action();
     } finally {
-      await this.stopTracking(options);
+      await this.stopTracking();
     }
   }
-  async canUndo(options?: LogOptions | undefined): Promise<boolean> {
-    options = {channelId: this.defaultChannelId, ...options} as LogOptions; 
-    const status = await this.undoLog.status(options.channelId);
+  async canUndo(): Promise<boolean> {
+    const status = await this.undoLog.status(this.channelId);
     return status.undos > 0;
   }
-  async canRedo(options?: LogOptions | undefined): Promise<boolean> {
-    options = {channelId: this.defaultChannelId, ...options} as LogOptions; 
-    const status = await this.undoLog.status(options.channelId);
+  async canRedo(): Promise<boolean> {
+    const status = await this.undoLog.status(this.channelId);
     return status.redos > 0;
   }
-  async undo(options?: LogOptions | undefined): Promise<void> {
-    options = {channelId: this.defaultChannelId, ...options} as LogOptions; 
-    await this.undoLog.undo(options.channelId);
+  async undo(): Promise<void> {
+    await this.undoLog.undo(this.channelId);
   }
-  async redo(options?: LogOptions | undefined): Promise<void> {
-    options = {channelId: this.defaultChannelId, ...options} as LogOptions; 
-    await this.undoLog.redo(options.channelId);
-  }  
+  async redo(): Promise<void> {
+    await this.undoLog.redo(this.channelId);
+  }
 }
