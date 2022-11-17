@@ -1,6 +1,5 @@
 import { promises } from "fs";
 import path from "path";
-import { Database } from "../sqlite3";
 import { DatabaseImpl } from "../impl/sqlite3";
 import { UndoLogImpl } from "../impl/undo-log";
 import { UndoLogAssertionsImpl } from "../impl/undo-log-assertions";

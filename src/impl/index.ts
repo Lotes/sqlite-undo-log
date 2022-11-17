@@ -6,23 +6,19 @@ import {
   UndoLogSetupPublic,
 } from "..";
 import { Connection } from "../sqlite3";
-import { UndoLogSetupImpl } from "./undo-log-setup";
-import { UndoLogUtilsImpl } from "./undo-log-utils";
 import _ from "lodash";
 import { UndoLogImpl } from "./undo-log";
 import { UndoLogUtils } from "../undo-log-utils";
 import { UndoLog } from "../undo-log";
+import { UndoLogFactory } from "../undo-log-factory";
+import { UndoLogSetup } from "../undo-log-setup";
 
 export class UndoLogSetupPublicImpl implements UndoLogSetupPublic {
-  private utils: UndoLogUtilsImpl;
-  private setup: UndoLogSetupImpl;
-  constructor(private connection: Connection, private tablePrefix = "undo_") {
-    this.utils = new UndoLogUtilsImpl(this.connection, this.tablePrefix);
-    this.setup = new UndoLogSetupImpl(
-      this.connection,
-      this.utils,
-      this.tablePrefix
-    );
+  private utils: UndoLogUtils;
+  private setup: UndoLogSetup;
+  constructor(private factory: UndoLogFactory) {
+    this.utils = factory.createUtils();
+    this.setup = factory.createSetup(this.utils);
   }
   async initializeMultiple(
     options: InitializeMultipleOptions
@@ -35,10 +31,7 @@ export class UndoLogSetupPublicImpl implements UndoLogSetupPublic {
       for (const tableName of tables) {
         await this.setup.addTable(tableName, channelId);
       }
-      result[channelId] = new UndoLogPublicImpl(this.connection, this.utils, {
-        channelId,
-        tablePrefix: this.tablePrefix,
-      });
+      result[channelId] = this.factory.createPublicLogApi(this.utils, channelId);
     }
     return result;
   }
@@ -49,10 +42,7 @@ export class UndoLogSetupPublicImpl implements UndoLogSetupPublic {
       logTableNames
     );
     tables.forEach((n) => this.setup.addTable(n, channelId));
-    return new UndoLogPublicImpl(this.connection, this.utils, {
-      tablePrefix: this.tablePrefix,
-      channelId,
-    });
+    return this.factory.createPublicLogApi(this.utils, channelId);
   }
 }
 
