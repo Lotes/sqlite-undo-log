@@ -38,11 +38,14 @@ describe("UndoLog", () => {
       // arrange
       await utils.createTable("all_types", AllTypeTable.Definition);
       await setup.addTable("all_types", 0);
-      
+
       // act
-      await log.recordWithin(0, undefined, async () => {
+      await log.startTracking(0);
+      try {
         await utils.insertIntoTable("all_types", AllTypeTable.Values[0]);
-      });
+      } finally {
+        await log.stopTracking(0);
+      }
 
       // assert
       const channel = await assertions.assertChannelInStatus(0, "READY");
@@ -65,9 +68,12 @@ describe("UndoLog", () => {
       await setup.addTable("all_types", 0);
 
       // act
-      await log.recordWithin(0, undefined, async () => {
+      await log.startTracking(0);
+      try {
         await utils.deleteFromTable("all_types", AllTypeTable.Values[0].id);
-      });
+      } finally  {
+        await log.stopTracking(0);
+      }
 
       // assert
       const channel = await assertions.assertChannelInStatus(0, "READY");
@@ -90,7 +96,8 @@ describe("UndoLog", () => {
       await setup.addTable("all_types", 0);
 
       // act
-      await log.recordWithin(0, undefined, async () => {
+      await log.startTracking(0);
+      try {
         await utils.updateTable<AllTypeTable.Row>(
           "all_types",
           AllTypeTable.Values[0].id,
@@ -99,7 +106,9 @@ describe("UndoLog", () => {
             zero: 1,
           }
         );
-      });
+      } finally {
+        await log.stopTracking(0);
+      }
 
       // assert
       const channel = await assertions.assertChannelInStatus(0, "READY");
@@ -122,9 +131,12 @@ describe("UndoLog", () => {
       // arrange
       await utils.createTable("all_types", AllTypeTable.Definition);
       await setup.addTable("all_types", 0);
-      await log.recordWithin(0, undefined, async () => {
+      await log.startTracking(0);
+      try{
         await utils.insertIntoTable("all_types", AllTypeTable.Values[0]);
-      });
+      } finally {
+        await log.stopTracking(0);
+      }
 
       // act
       await log.undo(0);
@@ -139,9 +151,12 @@ describe("UndoLog", () => {
       await utils.createTable("all_types", AllTypeTable.Definition);
       await utils.insertIntoTable("all_types", AllTypeTable.Values[0]);
       await setup.addTable("all_types", 0);
-      await log.recordWithin(0, undefined, async () => {
+      await log.startTracking(0);
+      try {
         await utils.deleteFromTable("all_types", AllTypeTable.Values[0].id);
-      });
+      } finally {
+        await log.stopTracking(0);
+      }
 
       // act
       await log.undo(0);
@@ -155,12 +170,19 @@ describe("UndoLog", () => {
       await utils.createTable("all_types", AllTypeTable.Definition);
       await utils.insertIntoTable("all_types", AllTypeTable.Values[0]);
       await setup.addTable("all_types", 0);
-      await log.recordWithin(0, undefined, async () => {
-        await utils.updateTable<AllTypeTable.Row>("all_types", AllTypeTable.Values[0].id, {
-          blob: Buffer.from("it lives"),
-          num: 333
-        });
-      });
+      await log.startTracking(0);
+      try {
+        await utils.updateTable<AllTypeTable.Row>(
+          "all_types",
+          AllTypeTable.Values[0].id,
+          {
+            blob: Buffer.from("it lives"),
+            num: 333,
+          }
+        );
+      } finally {
+        await log.stopTracking(0);
+      }
 
       // act
       await log.undo(0);

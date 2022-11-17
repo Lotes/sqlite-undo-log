@@ -16,10 +16,20 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     this.prefix = prefix;
     this.utils = utils;
   }
-  async install(): Promise<void> {
-    for (const table of tables) {
-      await this.utils.createUndoLogTable(table.name, table);
+  async install(): Promise<string[]> {
+    if (!await this.isAlreadyInstalled()) {
+      for (const table of tables) {
+        await this.utils.createUndoLogTable(table.name, table);
+      }
     }
+    return tables.map(t => `${this.prefix}${t.name}`);
+  }
+  private async isAlreadyInstalled(): Promise<boolean> {
+    let alreadyInstalled = true;
+    for (const table of tables) {
+      alreadyInstalled &&= await this.utils.doesTableExist(table.name);
+    }
+    return alreadyInstalled;
   }
   async uninstall(): Promise<void> {
     for (const table of tables) {

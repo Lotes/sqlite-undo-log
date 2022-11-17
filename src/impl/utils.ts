@@ -1,10 +1,6 @@
 import { unreachableCase } from "ts-assert-unreachable";
 import { Connection, Parameters } from "../sqlite3";
-import {
-  TableColumn,
-  TableDefinition,
-  ForeignKey
-} from "../tables";
+import { TableColumn, TableDefinition, ForeignKey } from "../tables";
 import { UndoLogError } from "../undo-log";
 import { ColumnValue, Utils } from "../utils";
 
@@ -59,7 +55,7 @@ export class UtilsImpl implements Utils {
       ) > -1
     );
   }
-  
+
   async insertIntoTable<T extends Record<string, any>>(name: string, row: T) {
     const columns: string[] = [];
     let parameters = {};
@@ -110,10 +106,13 @@ export class UtilsImpl implements Utils {
 
   protected createForeignKeys(definition: TableDefinition, prefix: string) {
     function createOnDelete(f: ForeignKey) {
-      switch(f.onDelete) {
-        case "CASCADE": return "ON DELETE CASCADE";
-        case "SET_NULL": return "ON DELETE SET NULL";
-        default: return "";
+      switch (f.onDelete) {
+        case "CASCADE":
+          return "ON DELETE CASCADE";
+        case "SET_NULL":
+          return "ON DELETE SET NULL";
+        default:
+          return "";
       }
     }
     const foreignFunc = (n: string, f: ForeignKey) =>
@@ -249,5 +248,15 @@ export class UtilsImpl implements Utils {
   }
   private unquoteText(value: string): string {
     return value.substr(1, value.length - 2).replace(/''/g, "'");
+  }
+
+  async getAllTableNames(): Promise<string[]> {
+    const query = `
+      SELECT name
+      FROM sqlite_schema
+      WHERE type ='table' AND name NOT LIKE 'sqlite_%'
+    `;
+    const rows = await this.connection.getAll<{ name: string }>(query);
+    return rows.map((r) => r.name);
   }
 }
