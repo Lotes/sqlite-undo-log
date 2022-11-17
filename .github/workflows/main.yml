@@ -22,3 +22,7 @@ jobs:
       run:  sudo npm install -g jest
     - name: Run Tests
       run:  yarn test
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@v1.7
+      with:
+        projectBaseDir: .
