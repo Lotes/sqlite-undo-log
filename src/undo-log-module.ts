@@ -32,6 +32,8 @@ export interface UndoLogTestServices {
     utils: Utils;
     assertions: Assertions;
     logAssertions: UndoLogAssertions;
+    log: UndoLog;
+    apiLog: UndoLogPublic;
 }
 
 function module(connection: Connection, prefix: string): Module<UndoLogServices & UndoLogConnectionServices> {
@@ -47,18 +49,20 @@ function module(connection: Connection, prefix: string): Module<UndoLogServices 
 }
 
 export function createServices(connection: Connection, prefix: string) {
-    return inject(module(connection, prefix));
+    return inject(module(connection, prefix)) as UndoLogServices & UndoLogConnectionServices;
 }
 
-function testModule(connection: Connection, prefix: string): Module<UndoLogTestServices & UndoLogConnectionServices> {
+function testModule(connection: Connection, prefix: string): Module<UndoLogTestServices & UndoLogConnectionServices & UndoLogServices> {
     return {
         ...module(connection, prefix),
         utils: srv => new UtilsImpl(srv.connection),
         assertions:  srv => new AssertionsImpl(srv.utils),
         logAssertions: srv => new UndoLogAssertionsImpl(srv.logUtils),
+        log: srv => srv.logFactory(),
+        apiLog: srv => srv.apiLogFactory(0)
     };
 }
 
 export function createTestServices(connection: Connection, prefix: string) {
-    return inject(testModule(connection, prefix));
+    return inject(testModule(connection, prefix)) as UndoLogTestServices & UndoLogConnectionServices & UndoLogServices;
 }

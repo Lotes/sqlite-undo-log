@@ -1,22 +1,24 @@
+import { Assertions } from "../assertions";
 import { Connection } from "../sqlite3";
 import { tables } from "../tables";
 import { UndoLog } from "../undo-log";
 import { UndoLogAssertions } from "../undo-log-assertions";
 import { UndoLogSetup } from "../undo-log-setup";
-import { UndoLogUtils } from "../undo-log-utils";
+import { Utils } from "../utils";
 import { AllTypeTable, setupBeforeEach } from "./fixtures";
 
 describe("UndoLog", () => {
   let connection: Connection;
-  let setup: UndoLogSetup;
+  let logSetup: UndoLogSetup;
   let log: UndoLog;
-  let utils: UndoLogUtils;
-  let assertions: UndoLogAssertions;
+  let utils: Utils;
+  let assertions: Assertions;
+  let logAssertions: UndoLogAssertions;
 
   beforeEach(async () => {
-    ({ setup, assertions, utils, log, connection, assertions } =
+    ({ logSetup, logAssertions, assertions, utils, log, connection } =
       await setupBeforeEach());
-    await setup.install();
+    await logSetup.install();
   });
 
   afterEach(async () => {
@@ -37,7 +39,7 @@ describe("UndoLog", () => {
     test("insertion works", async () => {
       // arrange
       await utils.createTable("all_types", AllTypeTable.Definition);
-      await setup.addTable("all_types", 0);
+      await logSetup.addTable("all_types", 0);
 
       // act
       await log.startTracking(0);
@@ -48,11 +50,11 @@ describe("UndoLog", () => {
       }
 
       // assert
-      const channel = await assertions.assertChannelInStatus(0, "READY");
-      const [action] = await assertions.assertChannelHasActions(channel, 1);
-      const [change] = await assertions.assertActionHasChanges(action, 1);
+      const channel = await logAssertions.assertChannelInStatus(0, "READY");
+      const [action] = await logAssertions.assertChannelHasActions(channel, 1);
+      const [change] = await logAssertions.assertActionHasChanges(action, 1);
       expect(change.type).toBe("INSERT");
-      await assertions.assertChangeHasValues(change, "new", {
+      await logAssertions.assertChangeHasValues(change, "new", {
         id: "1",
         name: "one",
         num: "1",
@@ -65,7 +67,7 @@ describe("UndoLog", () => {
       // arrange
       await utils.createTable("all_types", AllTypeTable.Definition);
       await utils.insertIntoTable("all_types", AllTypeTable.Values[0]);
-      await setup.addTable("all_types", 0);
+      await logSetup.addTable("all_types", 0);
 
       // act
       await log.startTracking(0);
@@ -76,11 +78,11 @@ describe("UndoLog", () => {
       }
 
       // assert
-      const channel = await assertions.assertChannelInStatus(0, "READY");
-      const [action] = await assertions.assertChannelHasActions(channel, 1);
-      const [change] = await assertions.assertActionHasChanges(action, 1);
+      const channel = await logAssertions.assertChannelInStatus(0, "READY");
+      const [action] = await logAssertions.assertChannelHasActions(channel, 1);
+      const [change] = await logAssertions.assertActionHasChanges(action, 1);
       expect(change.type).toBe("DELETE");
-      await assertions.assertChangeHasValues(change, "old", {
+      await logAssertions.assertChangeHasValues(change, "old", {
         id: "1",
         name: "one",
         num: "1",
@@ -93,7 +95,7 @@ describe("UndoLog", () => {
       // arrange
       await utils.createTable("all_types", AllTypeTable.Definition);
       await utils.insertIntoTable("all_types", AllTypeTable.Values[0]);
-      await setup.addTable("all_types", 0);
+      await logSetup.addTable("all_types", 0);
 
       // act
       await log.startTracking(0);
@@ -111,15 +113,15 @@ describe("UndoLog", () => {
       }
 
       // assert
-      const channel = await assertions.assertChannelInStatus(0, "READY");
-      const [action] = await assertions.assertChannelHasActions(channel, 1);
-      const [change] = await assertions.assertActionHasChanges(action, 1);
+      const channel = await logAssertions.assertChannelInStatus(0, "READY");
+      const [action] = await logAssertions.assertChannelHasActions(channel, 1);
+      const [change] = await logAssertions.assertActionHasChanges(action, 1);
       expect(change.type).toBe("UPDATE");
-      await assertions.assertChangeHasValues(change, "new", {
+      await logAssertions.assertChangeHasValues(change, "new", {
         name: "TADAA",
         zero: "1.0",
       });
-      await assertions.assertChangeHasValues(change, "old", {
+      await logAssertions.assertChangeHasValues(change, "old", {
         name: "one",
         zero: "0.0",
       });
@@ -130,7 +132,7 @@ describe("UndoLog", () => {
     test("insertion works", async () => {
       // arrange
       await utils.createTable("all_types", AllTypeTable.Definition);
-      await setup.addTable("all_types", 0);
+      await logSetup.addTable("all_types", 0);
       await log.startTracking(0);
       try{
         await utils.insertIntoTable("all_types", AllTypeTable.Values[0]);
@@ -150,7 +152,7 @@ describe("UndoLog", () => {
       // arrange
       await utils.createTable("all_types", AllTypeTable.Definition);
       await utils.insertIntoTable("all_types", AllTypeTable.Values[0]);
-      await setup.addTable("all_types", 0);
+      await logSetup.addTable("all_types", 0);
       await log.startTracking(0);
       try {
         await utils.deleteFromTable("all_types", AllTypeTable.Values[0].id);
@@ -169,7 +171,7 @@ describe("UndoLog", () => {
       // arrange
       await utils.createTable("all_types", AllTypeTable.Definition);
       await utils.insertIntoTable("all_types", AllTypeTable.Values[0]);
-      await setup.addTable("all_types", 0);
+      await logSetup.addTable("all_types", 0);
       await log.startTracking(0);
       try {
         await utils.updateTable<AllTypeTable.Row>(

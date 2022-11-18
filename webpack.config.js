@@ -5,8 +5,8 @@ module.exports = {
     mode: "development",
     devtool: "inline-source-map",
     entry: {
-        index: "./src/ts/index.ts",
-        "sqlite3-adapter": "./src/ts/sqlite3-impl.ts",
+        index: "./src/index.ts",
+        "sqlite3-adapter": "./src/impl/sqlite3.ts",
     },
     externals: [nodeExternals()],
     externalsPresets: {
