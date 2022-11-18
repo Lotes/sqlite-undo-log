@@ -17,13 +17,14 @@ export class UndoLogSetupPublicImpl implements UndoLogSetupPublic {
   async initializeMultiple(
     options: InitializeMultipleOptions
   ): Promise<InitializeMultipleResult> {
-    await this.setup.install();
+    const excludedTableNames = await this.setup.install();
     const result: InitializeMultipleResult = {};
     for (const [key, value] of Object.entries(options)) {
       const channelId = typeof key === "number" ? key : parseInt(key, 10);
       const tables = typeof value === "string" ? [value] : value;
-      for (const tableName of tables) {
+      for (const tableName of _.difference(tables, excludedTableNames)) {
         await this.setup.addTable(tableName, channelId);
+        excludedTableNames.push(tableName);
       }
       result[channelId] = this.apiLogFactory(channelId);
     }
