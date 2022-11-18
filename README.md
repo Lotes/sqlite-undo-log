@@ -61,9 +61,10 @@ await log.undo(0 /*channel name*/ );
   * [ ] a own type system
   * [ ] add redo support
     * [ ] Respect undone flag
-* [ ] Complex test scenarios
+* [ ] add complex test scenarios
     * [ ] Foreign keys
     * [ ] Triggers
     * [ ] Order relevant
     * [ ] Composite keys
     * [ ] Multiple undos and redos
+* [ ] add cleanup and sync schema functions
