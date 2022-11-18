@@ -1,4 +1,4 @@
-import { SqliteType, TableColumn, TableDefinition } from "./tables";
+import { SqliteType, TableColumn, TableDefinition } from "./undo-log-tables";
 
 export type OldOrNew = "old"|"new";
 

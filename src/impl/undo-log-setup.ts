@@ -1,5 +1,5 @@
 import { Connection } from "../sqlite3";
-import { tables, ChangeType, TableColumn } from "../tables";
+import { tables, ChangeType, TableColumn } from "../undo-log-tables";
 import { UndoLogSetup } from "../undo-log-setup";
 import { UndoLogUtils } from "../undo-log-utils";
 

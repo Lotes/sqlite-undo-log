@@ -1,6 +1,6 @@
 import { Assertions } from "../assertions";
 import { Connection } from "../sqlite3";
-import { SqliteType } from "../tables";
+import { SqliteType } from "../undo-log-tables";
 import { UndoLogAssertions } from "../undo-log-assertions";
 import { Utils } from "../utils";
 import { setupBeforeEach, TableDefintion_OnlyOneType } from "./fixtures";

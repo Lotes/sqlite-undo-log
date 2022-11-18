@@ -4,7 +4,7 @@ import {
   Action,
   Change,
   Channel,
-} from "./tables";
+} from "./undo-log-tables";
 import { ColumnValue, OldOrNew, Utils } from "./utils";
 
 export interface UndoLogUtils extends Utils {

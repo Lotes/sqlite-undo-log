@@ -5,7 +5,7 @@ import {
   ChannelStatus,
   Change,
   Channel,
-} from "../tables";
+} from "../undo-log-tables";
 import { UndoLogError } from "../undo-log";
 import {
   UndoLogUtils,

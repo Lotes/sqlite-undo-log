@@ -1,6 +1,6 @@
-import { Action, Category, Change, Channel, Table } from "../tables";
+import { Action, Category, Change, Channel, Table } from "../undo-log-tables";
 import { Connection } from "../sqlite3";
-import { UndoLog, UndoLogError, UndoLogStatus } from "../undo-log";
+import { Delta, UndoLog, UndoLogError, UndoLogStatus } from "../undo-log";
 import { UndoLogUtils } from "../undo-log-utils";
 
 export class UndoLogImpl implements UndoLog {
@@ -28,14 +28,14 @@ export class UndoLogImpl implements UndoLog {
   async stopTracking(channelId: number): Promise<void> {
     await this.utils.updateChannel(channelId, "READY");
   }
-  private async doItWhileChannelHasStatus(
+  private async doItWhileChannelHasStatus<T>(
     channelId: number,
     status: Channel["status"],
-    action: () => Promise<void>
+    action: () => Promise<T>
   ) {
     await this.utils.updateChannel(channelId, status);
     try {
-      await action();
+      return await action();
     } finally {
       await this.utils.updateChannel(channelId, "READY");
     }
@@ -108,7 +108,7 @@ export class UndoLogImpl implements UndoLog {
       status: channel.status
     }
   }
-  async undo(channelId: number): Promise<void> {
+  async undo(channelId: number): Promise<Delta[]> {
     await this.utils.getOrCreateReadyChannel(channelId);
     const query = `
       SELECT a.*
@@ -126,11 +126,11 @@ export class UndoLogImpl implements UndoLog {
         `Channel '${channelId}' is at the bottom of the action stack.`
       );
     }
-    await this.doItWhileChannelHasStatus(channelId, "UNDOING", () =>
+    return await this.doItWhileChannelHasStatus(channelId, "UNDOING", () =>
       this.undoAction(row)
     );
   }
-  async redo(channelId: number): Promise<void> {
+  async redo(channelId: number): Promise<Delta[]> {
     await this.utils.getOrCreateReadyChannel(channelId);
     const query = `
       SELECT a.*
@@ -148,29 +148,35 @@ export class UndoLogImpl implements UndoLog {
         `Channel '${channelId}' has nothing to redo.`
       );
     }
-    await this.doItWhileChannelHasStatus(channelId, "RECORDING", () =>
+    return await this.doItWhileChannelHasStatus(channelId, "RECORDING", () =>
       this.redoAction(row)
     );
   }
-  private async undoAction(action: Action) {
+  private async undoAction(action: Action): Promise<Delta[]> {
     const query = `SELECT * FROM ${this.prefix}changes ch WHERE ch.action_id=$actionId ORDER BY ch.order_index DESC`;
     const parameters = { $actionId: action.id };
     const changes = await this.connection.getAll<Change>(query, parameters);
+    const result: Delta[] = [];
     for (const change of changes) {
-      await this.undoChange(change);
+      const delta = await this.undoChange(change);
+      result.push(delta);
     }
     await this.utils.markActionAsUndone(action.id, true);
+    return result;
   }
-  private async redoAction(action: Action) {
+  private async redoAction(action: Action): Promise<Delta[]> {
     const query = `SELECT * FROM ${this.prefix}changes ch WHERE ch.action_id=$actionId ORDER BY ch.order_index ASC`;
     const parameters = { $actionId: action.id };
     const changes = await this.connection.getAll<Change>(query, parameters);
+    const result: Delta[] = [];
     for (const change of changes) {
-      await this.redoChange(change);
+      const delta = await this.redoChange(change);
+      result.push(delta);
     }
     await this.utils.markActionAsUndone(action.id, false);
+    return result;
   }
-  private async undoChange(change: Change) {
+  private async undoChange(change: Change): Promise<Delta> {
     const query = `SELECT * FROM ${this.prefix}tables WHERE id=$id`;
     const parameters = { $id: change.table_id };
     const table = await this.connection.getSingle<Table>(query, parameters);
@@ -179,17 +185,14 @@ export class UndoLogImpl implements UndoLog {
     }
     switch (change.type) {
       case "INSERT":
-        await this.undoInsertion(table, change);
-        break;
+        return await this.undoInsertion(table, change);
       case "DELETE":
-        await this.undoDeletion(table, change);
-        break;
+        return await this.undoDeletion(table, change);
       case "UPDATE":
-        await this.undoUpdate(table, change);
-        break;
+        return await this.undoUpdate(table, change);
     }
   }
-  private async redoChange(change: Change) {
+  private async redoChange(change: Change): Promise<Delta> {
     const query = `SELECT * FROM ${this.prefix}tables WHERE id=$id`;
     const parameters = { $id: change.table_id };
     const table = await this.connection.getSingle<Table>(query, parameters);
@@ -198,17 +201,14 @@ export class UndoLogImpl implements UndoLog {
     }
     switch (change.type) {
       case "INSERT":
-        await this.redoInsertion(table, change);
-        break;
+        return await this.redoInsertion(table, change);
       case "DELETE":
-        await this.redoDeletion(table, change);
-        break;
+        return await this.redoDeletion(table, change);
       case "UPDATE":
-        await this.redoUpdate(table, change);
-        break;
+        return await this.redoUpdate(table, change);
     }
   }
-  private async undoInsertion(table: Table, change: Change) {
+  private async undoInsertion(table: Table, change: Change): Promise<Delta> {
     const run = await this.connection.run(
       `DELETE FROM ${table.name} WHERE rowid=$rowId`,
       { $rowId: change.new_row_id }
@@ -218,24 +218,47 @@ export class UndoLogImpl implements UndoLog {
         `Unable to delete rowid=${change.new_row_id} in table '${table.name}'.`
       );
     }
+    return {
+      $type: "DELETE",
+      $rowId: change.old_row_id,
+      $tableName: table.name,
+    } as Delta;
   }
-  private async undoDeletion(table: Table, change: Change) {
+  private async undoDeletion(table: Table, change: Change): Promise<Delta> {
     const values = await this.utils.getValuesOfChange(change, "old");
     const unquotedValues = this.utils.unquote(values);
     await this.utils.insertIntoTable(table.name, unquotedValues);
+    return {
+      ...values,
+      $type: "INSERT",
+      $rowId: change.old_row_id,
+      $tableName: table.name,
+    } as Delta;
   }
-  private async undoUpdate(table: Table, change: Change) {
+  private async undoUpdate(table: Table, change: Change): Promise<Delta> {
     const values = await this.utils.getValuesOfChange(change, "old");
     const unquotedValues = this.utils.unquote(values);
     await this.utils.updateTable(table.name, change.new_row_id, unquotedValues);
+    return {
+      ...values,
+      $type: "UPDATE",
+      $rowId: change.old_row_id,
+      $tableName: table.name,
+    } as Delta;
   }
 
-  private async redoInsertion(table: Table, change: Change) {
+  private async redoInsertion(table: Table, change: Change): Promise<Delta> {
     const values = await this.utils.getValuesOfChange(change, "new");
     const unquotedValues = this.utils.unquote(values);
     await this.utils.insertIntoTable(table.name, unquotedValues);
+    return {
+      ...values,
+      $type: "INSERT",
+      $rowId: change.new_row_id,
+      $tableName: table.name,
+    } as Delta;
   }
-  private async redoDeletion(table: Table, change: Change) {
+  private async redoDeletion(table: Table, change: Change): Promise<Delta> {
     const run = await this.connection.run(
       `DELETE FROM ${table.name} WHERE rowid=$rowId`,
       { $rowId: change.old_row_id }
@@ -245,10 +268,21 @@ export class UndoLogImpl implements UndoLog {
         `Unable to delete rowid=${change.new_row_id} in table '${table.name}'.`
       );
     }
+    return {
+      $type: "DELETE",
+      $rowId: change.new_row_id,
+      $tableName: table.name,
+    } as Delta;
   }
-  private async redoUpdate(table: Table, change: Change) {
+  private async redoUpdate(table: Table, change: Change): Promise<Delta> {
     const values = await this.utils.getValuesOfChange(change, "new");
     const unquotedValues = this.utils.unquote(values);
     await this.utils.updateTable(table.name, change.old_row_id, unquotedValues);
+    return {
+      ...values,
+      $type: "UPDATE",
+      $rowId: change.new_row_id,
+      $tableName: table.name,
+    } as Delta;
   }
 }

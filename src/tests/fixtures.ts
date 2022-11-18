@@ -1,7 +1,7 @@
 import { promises } from "fs";
 import path from "path";
 import { DatabaseImpl } from "../impl/sqlite3";
-import { SqliteType, TableDefinition } from "../tables";
+import { SqliteType, TableDefinition } from "../undo-log-tables";
 import { createTestServices } from "..";
 
 export namespace AllTypeTable {

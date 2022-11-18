@@ -1,6 +1,6 @@
 import { Assertions } from "../assertions";
 import { Connection } from "../sqlite3";
-import { tables } from "../tables";
+import { tables } from "../undo-log-tables";
 import { UndoLog } from "../undo-log";
 import { UndoLogAssertions } from "../undo-log-assertions";
 import { UndoLogSetup } from "../undo-log-setup";

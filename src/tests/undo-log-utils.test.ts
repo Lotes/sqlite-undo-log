@@ -1,4 +1,4 @@
-import { Channel, Changes, Channels } from "../tables";
+import { Channel, Changes, Channels } from "../undo-log-tables";
 import { setupBeforeEach } from "./fixtures";
 import { Connection } from "../sqlite3";
 import { UndoLogUtils } from "../undo-log-utils";

@@ -1,6 +1,6 @@
 import { unreachableCase } from "ts-assert-unreachable";
 import { Connection, Parameters } from "../sqlite3";
-import { TableColumn, TableDefinition, ForeignKey } from "../tables";
+import { TableColumn, TableDefinition, ForeignKey } from "../undo-log-tables";
 import { UndoLogError } from "../undo-log";
 import { ColumnValue, Utils } from "../utils";
 
