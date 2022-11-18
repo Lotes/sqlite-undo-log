@@ -2,7 +2,7 @@ import { promises } from "fs";
 import path from "path";
 import { DatabaseImpl } from "../impl/sqlite3";
 import { SqliteType, TableDefinition } from "../tables";
-import { createTestServices } from "../undo-log-module";
+import { createTestServices } from "..";
 
 export namespace AllTypeTable {
   export const Definition: TableDefinition = {
