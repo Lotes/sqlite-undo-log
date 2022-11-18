@@ -52,6 +52,9 @@ await log.undo(0 /*channel name*/ );
 
 ## Plans
 * [ ] add adapters for other SQLite implementations
+  * [ ] [sqlite](https://www.npmjs.com/package/sqlite)
+  * [ ] [sqlite3](https://github.com/TryGhost/node-sqlite3)
+  * [ ] [better-sqlite3](https://github.com/WiseLibs/better-sqlite3)
 * [ ] add user-friendly API
   * [ ] get back deltas, changed entity ids
   * [ ] a own type system
