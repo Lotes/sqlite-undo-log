@@ -1,23 +1,26 @@
+import { UndoLogPublic, UndoLogSetupPublic } from "..";
 import { Assertions } from "../assertions";
 import { Connection } from "../sqlite3";
+import { UndoLogAssertions } from "../undo-log-assertions";
+import { UndoLogUtils } from "../undo-log-utils";
 import { Utils } from "../utils";
 import { setupBeforeEach } from "./fixtures";
 
-describe("Public API", () => {
+describe("Public API single channel", () => {
     let connection: Connection;
-    let utils: Utils;
-    let assertions: Assertions;
+    let logUtils: UndoLogUtils;
+    let logAssertions: UndoLogAssertions;
+    let api: UndoLogSetupPublic;
+    let log: UndoLogPublic;
   
     beforeEach(async () => {
-      ({ assertions, utils, connection } = await setupBeforeEach());
-      
+      ({ logAssertions, logUtils, connection, api } = await setupBeforeEach());
+      log = await api.initializeSingle(0);
     });
   
     afterEach(async () => {
       await connection.close();
     });
-  
-    describe("lol", () => {
 
-    });
+    //TODO
 });

@@ -70,11 +70,11 @@ export class UndoLogPublicImpl implements UndoLogPublic {
   }
   async canUndo(): Promise<boolean> {
     const status = await this.undoLog.status(this.channelId);
-    return status.undos > 0;
+    return status.status === "READY" && status.undos > 0;
   }
   async canRedo(): Promise<boolean> {
     const status = await this.undoLog.status(this.channelId);
-    return status.redos > 0;
+    return status.status === "READY" && status.redos > 0;
   }
   async undo(): Promise<void> {
     await this.undoLog.undo(this.channelId);
