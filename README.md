@@ -55,6 +55,7 @@ await log.undo(0 /*channel name*/ );
   * [ ] [sqlite](https://www.npmjs.com/package/sqlite)
   * [ ] [sqlite3](https://github.com/TryGhost/node-sqlite3)
   * [ ] [better-sqlite3](https://github.com/WiseLibs/better-sqlite3)
+  * [ ] [sql.js](https://github.com/sql-js/sql.js)
 * [ ] add user-friendly API
   * [ ] get back deltas, changed entity ids
   * [ ] a own type system
