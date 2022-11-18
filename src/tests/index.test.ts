@@ -1,4 +1,4 @@
-import { UndoLogFactoryImpl } from "../impl/undo-log-factory";
+import { UndoLogFactoryImpl } from "../undo-log-module";
 import { Connection } from "../sqlite3";
 import { UndoLogAssertions } from "../undo-log-assertions";
 import { UndoLogFactory } from "../undo-log-factory";

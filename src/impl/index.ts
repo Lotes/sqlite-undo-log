@@ -10,16 +10,10 @@ import _ from "lodash";
 import { UndoLogImpl } from "./undo-log";
 import { UndoLogUtils } from "../undo-log-utils";
 import { UndoLog } from "../undo-log";
-import { UndoLogFactory } from "../undo-log-factory";
 import { UndoLogSetup } from "../undo-log-setup";
 
 export class UndoLogSetupPublicImpl implements UndoLogSetupPublic {
-  private utils: UndoLogUtils;
-  private setup: UndoLogSetup;
-  constructor(private factory: UndoLogFactory) {
-    this.utils = factory.createUtils();
-    this.setup = factory.createSetup(this.utils);
-  }
+  constructor(private utils: UndoLogUtils, private setup: UndoLogSetup, private apiLogFactory: (channelId: number) => UndoLogPublic) {}
   async initializeMultiple(
     options: InitializeMultipleOptions
   ): Promise<InitializeMultipleResult> {
@@ -31,7 +25,7 @@ export class UndoLogSetupPublicImpl implements UndoLogSetupPublic {
       for (const tableName of tables) {
         await this.setup.addTable(tableName, channelId);
       }
-      result[channelId] = this.factory.createPublicLogApi(this.utils, channelId);
+      result[channelId] = this.apiLogFactory(channelId);
     }
     return result;
   }
@@ -42,7 +36,7 @@ export class UndoLogSetupPublicImpl implements UndoLogSetupPublic {
       logTableNames
     );
     tables.forEach((n) => this.setup.addTable(n, channelId));
-    return this.factory.createPublicLogApi(this.utils, channelId);
+    return this.apiLogFactory(channelId);
   }
 }
 

@@ -1387,6 +1387,11 @@ diff@^4.0.1:
   resolved "https://registry.npmjs.org/diff/-/diff-4.0.2.tgz"
   integrity sha512-58lmxKSA4BNyLz+HHMUzlOEpg09FV+ev6ZMe3vJihgdxzgcwZ8VoEEPmALCZG9LmqfVoNMMKpttIYTVG6uDY7A==
 
+djinject@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/djinject/-/djinject-0.1.0.tgz#21e69de0d60f4563e3b04982ce34f9d5040a6e09"
+  integrity sha512-j6csQRufpUccTC5P6K+BGdHA2bcMTP0g7UXVXOpiysWfkUwsuAEdFuBRfpcXWYRV3lHRgykIPn4DWdb7OfNuAg==
+
 domexception@^2.0.1:
   version "2.0.1"
   resolved "https://registry.npmjs.org/domexception/-/domexception-2.0.1.tgz"
