@@ -1,9 +1,7 @@
 import { UndoLogPublic, UndoLogSetupPublic } from "..";
-import { Assertions } from "../assertions";
 import { Connection } from "../sqlite3";
 import { UndoLogAssertions } from "../undo-log-assertions";
 import { UndoLogUtils } from "../undo-log-utils";
-import { Utils } from "../utils";
 import { setupBeforeEach } from "./fixtures";
 
 describe("Public API single channel", () => {
@@ -22,5 +20,7 @@ describe("Public API single channel", () => {
       await connection.close();
     });
 
-    //TODO
+    test('TODO', () => {
+      
+    });
 });

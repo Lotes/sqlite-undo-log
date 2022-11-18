@@ -36,7 +36,7 @@ export class UndoLogSetupPublicImpl implements UndoLogSetupPublic {
       await this.utils.getAllTableNames(),
       logTableNames
     );
-    tables.forEach((n) => this.setup.addTable(n, channelId));
+    await Promise.all(tables.map((n) => this.setup.addTable(n, channelId)));
     return this.apiLogFactory(channelId);
   }
 }
