@@ -49,13 +49,3 @@ await log.undo(0 /*channel name*/ );
 
 ## File dependencies
 ![](docs/architecture.svg)
-
-## TODO
-* [ ] Redo
-    * [ ] Respect undone flag
-* [ ] Complex scenarios
-    * [ ] Foreign keys
-    * [ ] Triggers
-    * [ ] Order relevant
-    * [ ] Multiple undos and redos
-* [ ] Cleanup triggers
