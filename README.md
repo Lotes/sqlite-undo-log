@@ -20,7 +20,7 @@ An undo log for SQLite 3
 First, wrap the SQLite client...
 
 ```typescript
-const database = new DatabaseImpl(":memory:");
+const database = new NodeSqlite3DatabaseImpl(":memory:");
 const connection = await database.connect();
 ```
 

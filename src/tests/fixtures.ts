@@ -1,6 +1,6 @@
 import { promises } from "fs";
 import path from "path";
-import { DatabaseImpl } from "../impl/sqlite3";
+import { NodeSqlite3DatabaseImpl } from "../impl/sqlite3";
 import { SqliteType, TableDefinition } from "../undo-log-tables";
 import { createTestServices } from "..";
 
@@ -47,7 +47,7 @@ export async function setupBeforeEach() {
     "output",
     expect.getState().currentTestName.replace(/\s+/g, "_") + ".sqlite3"
   );
-  const database = new DatabaseImpl(fileName, true);
+  const database = new NodeSqlite3DatabaseImpl(fileName, true);
   const connection = await database.connect();
   return createTestServices(connection, 'undo_');
 }

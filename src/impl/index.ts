@@ -9,7 +9,7 @@ import { Connection } from "../sqlite3";
 import _ from "lodash";
 import { UndoLogImpl } from "./undo-log";
 import { UndoLogUtils } from "../undo-log-utils";
-import { UndoLog } from "../undo-log";
+import { Delta, UndoLog } from "../undo-log";
 import { UndoLogSetup } from "../undo-log-setup";
 
 export class UndoLogSetupPublicImpl implements UndoLogSetupPublic {
@@ -78,10 +78,10 @@ export class UndoLogPublicImpl implements UndoLogPublic {
     const status = await this.undoLog.status(this.channelId);
     return status.status === "READY" && status.redos > 0;
   }
-  async undo(): Promise<void> {
-    await this.undoLog.undo(this.channelId);
+  undo(): Promise<Delta[]> {
+    return this.undoLog.undo(this.channelId);
   }
-  async redo(): Promise<void> {
-    await this.undoLog.redo(this.channelId);
+  redo(): Promise<Delta[]> {
+    return this.undoLog.redo(this.channelId);
   }
 }

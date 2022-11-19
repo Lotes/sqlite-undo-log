@@ -2,7 +2,7 @@ import { inject, Module } from "djinject";
 import { UndoLogPublicImpl, UndoLogSetupPublicImpl } from "./impl";
 import { Assertions } from "./assertions";
 import { Connection } from "./sqlite3";
-import { UndoLog } from "./undo-log";
+import { Delta, UndoLog } from "./undo-log";
 import { UndoLogAssertions } from "./undo-log-assertions";
 import { UndoLogSetup } from "./undo-log-setup";
 import { UndoLogUtils } from "./undo-log-utils";
@@ -85,6 +85,6 @@ export interface UndoLogPublic {
   trackWithin(action: () => Promise<void>, category?: string): Promise<void>;
   canUndo(): Promise<boolean>;
   canRedo(): Promise<boolean>;
-  undo(): Promise<void>;
-  redo(): Promise<void>;
+  undo(): Promise<Delta[]>;
+  redo(): Promise<Delta[]>;
 }
