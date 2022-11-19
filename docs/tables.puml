@@ -44,7 +44,6 @@ class Value {
 }
 
 class Channel {
-  id: int
 }
 
 enum ChannelStatus {
@@ -53,6 +52,27 @@ enum ChannelStatus {
   Recording
   Redoing
 }
+
+class CleanUpTask {
+  name: string
+  refTableName: string
+}
+
+enum CleanUpTaskType {
+  Root
+  Table
+  Trigger
+}
+
+class Logs {
+  query: string
+  parameters: string
+  location: string
+}
+
+note as NoteLogs
+when DEBUG=1
+end note
 
 Channel o-- ChannelStatus
 Action o-- Channel
@@ -64,4 +84,7 @@ Table o-- Channel
 Column o-- Table 
 Value o-- Column
 Value o-- Change
+CleanUpTask o-- CleanUpTaskType
+Logs -[hidden]up- CleanUpTaskType
+NoteLogs -[hidden]up- Logs 
 @enduml
