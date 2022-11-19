@@ -17,31 +17,27 @@ An undo log for SQLite 3
 
 ## Example
 
-First, get all needed concepts...
+First, wrap the SQLite client...
 
 ```typescript
 const database = new DatabaseImpl(":memory:");
 const connection = await database.connect();
-const utils = new UndoLogUtilsImpl(connection);
-const setup = new UndoLogSetupImpl(connection, utils);
-const log = new UndoLogImpl(connection, utils);
 ```
 
-Then, setup your database, including tables. Each undoable table must be registered at a channel. A channel manages the status (ready, recording, undoing) and is only a number.
+Then, create and install the undo log services...
 
 ```typescript
-await setup.install(); //creates needed tables and triggers
-await setup.addTable("my_own_table", 0); //0 = channel name
+const { api } = createUndoLogServices(connection);
+const log = await api.initializeSingle();
 ```
 
 Last, but not least: Record your actions and undo them if required.
 
 ```typescript
-await log.recordWithin(0, undefined, async () => {
+await log.trackWithin(async () => {
   // <-- record all your INSERT, DELETE & UPDATE statements
 });
-
-await log.undo(0 /*channel name*/ );
+await log.undo();
 ```
 
 ## Installed table schema
