@@ -5,19 +5,16 @@ import { UndoLogUtils } from "../undo-log-utils";
 
 const CLEANUP_TASK_NAME = CleanUpTasks.name;
 export class UndoLogSetupImpl implements UndoLogSetup {
-  private connection: Connection;
-  private prefix: string;
-  private utils: UndoLogUtils;
   constructor(
-    connection: Connection,
-    utils: UndoLogUtils,
-    prefix: string = "undo_"
-  ) {
-    this.connection = connection;
-    this.prefix = prefix;
-    this.utils = utils;
-  }
+    private connection: Connection,
+    private utils: UndoLogUtils,
+    private forceForeignKeys: boolean = true,
+    private prefix: string = "undo_"
+  ) {}
   async install(): Promise<string[]> {
+    if(this.forceForeignKeys) {
+      await this.connection.execute("PRAGMA foreignKeys=1");
+    }
     if (!await this.isAlreadyInstalled()) {
       for (const table of tables) {
         await this.utils.createUndoLogTable(table.name, table);

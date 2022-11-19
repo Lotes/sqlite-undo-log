@@ -70,8 +70,12 @@ class Logs {
   location: string
 }
 
+object Config {
+  debug: boolean;
+}
+
 note as NoteLogs
-when DEBUG=1
+when Config.debug=true
 end note
 
 Channel o-- ChannelStatus
@@ -86,5 +90,6 @@ Value o-- Column
 Value o-- Change
 CleanUpTask o-- CleanUpTaskType
 Logs -[hidden]up- CleanUpTaskType
-NoteLogs -[hidden]up- Logs 
+NoteLogs -up-> Logs 
+NoteLogs .down. Config 
 @enduml

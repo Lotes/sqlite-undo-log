@@ -297,6 +297,55 @@ export interface CleanUpTask {
   ref_table_name: string|null;
 }
 
+export const Configs: TableDefinition = {
+  name: "configs",
+  primaryKey: ["id"],
+  columns: {
+    id: "INTEGER",
+    name: {
+      type: "TEXT",
+      canBeNull: false,
+    },
+    value: {
+      type: 'INTEGER',
+      canBeNull: false
+    },
+  },
+};
+
+export interface Config {
+  id: number;
+  name: string;
+  value: number;
+}
+
+export const Logs: TableDefinition = {
+  name: "logs",
+  primaryKey: ["id"],
+  columns: {
+    id: 'INTEGER',
+    query: {
+      type: "TEXT",
+      canBeNull: false,
+    },
+    parameters: {
+      type: 'TEXT',
+      canBeNull: false
+    },
+    location: {
+      type: 'TEXT',
+      canBeNull: false
+    },
+  },
+};
+
+export interface Log {
+  id: number;
+  query: string;
+  parameters: string;
+  location: string;
+}
+
 export const tables = [
   CleanUpTasks,
   Channels,
@@ -305,5 +354,6 @@ export const tables = [
   Changes,
   Tables,
   Columns,
-  Values
+  Values,
+  Configs
 ];

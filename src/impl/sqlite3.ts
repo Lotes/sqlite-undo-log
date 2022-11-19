@@ -1,5 +1,5 @@
 import sqlite from "sqlite3";
-import { Database, Connection, RunResult, Parameters } from "../sqlite3";
+import { Database, Connection, RunResult, Parameters, ConnectionListener, WeakConnection } from "../sqlite3";
 
 class NodeSqlite3AdapterDb {
   private db: sqlite.Database;
@@ -59,11 +59,16 @@ class NodeSqlite3AdapterDb {
 }
 
 export class NodeSqlite3ConnectionImpl implements Connection {
-  private db: NodeSqlite3AdapterDb;
-  private debug: boolean;
-  constructor(db: sqlite.Database, debug: boolean = false) {
-    this.db = new NodeSqlite3AdapterDb(db);
-    this.debug = debug;
+  private listeners: ConnectionListener[] = [];
+  constructor(private db: NodeSqlite3AdapterDb) {}
+  clone(): WeakConnection {
+    return new NodeSqlite3ConnectionImpl(this.db); //returns a clone with no listeners!
+  }
+  addConnectionListener(listener: ConnectionListener): void {
+    this.listeners.push(listener);
+  }
+  removeConnectionListener(listener: ConnectionListener): void {
+    this.listeners = this.listeners.filter(ls => ls === listener);
   }
   escapeString(str: string): string {
     return `'${str.replace(/\'/g, "''")}'`;
@@ -94,33 +99,20 @@ export class NodeSqlite3ConnectionImpl implements Connection {
     query: string,
     parameters: Parameters = {}
   ): Promise<void> {
-    if(!this.debug) {
-      return Promise.resolve();
-    }
-    
     const where = new Error().stack!;
-    await this.db.run(
-      `CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY, query TEXT, parameters TEXT, location TEXT)`
-    );
-    await this.db.run(
-      `INSERT INTO logs (query, parameters, location) VALUES ($query, $parameters, $location)`,
-      {
-        $query: query,
-        $parameters: JSON.stringify(parameters),
-        $location: where,
-      }
-    );
+    const event = {
+      location: where,
+      query,
+      parameters
+    };
+    this.listeners.forEach(ls => ls(event));
   }
 }
 
 export class NodeSqlite3DatabaseImpl implements Database {
   private fileName: string;
-  private debug: boolean;
-  private forceForeignKeys: boolean;
-  constructor(fileName?: string, debug?: boolean, forceForeignKeys?: boolean) {
+  constructor(fileName?: string) {
     this.fileName = fileName || ":memory:";
-    this.debug = debug ?? false;
-    this.forceForeignKeys = forceForeignKeys ?? true;
   }
   connect(): Promise<Connection> {
     const connection = new Promise<Connection>((resolve, reject) => {
@@ -129,7 +121,7 @@ export class NodeSqlite3DatabaseImpl implements Database {
         sqlite.OPEN_READWRITE | sqlite.OPEN_CREATE,
         async (err) => {
           if (err == null) {
-            const connection: Connection = new NodeSqlite3ConnectionImpl(db, this.debug);
+            const connection: Connection = new NodeSqlite3ConnectionImpl(new NodeSqlite3AdapterDb(db));
             resolve(connection);
             return;
           }
@@ -137,10 +129,6 @@ export class NodeSqlite3DatabaseImpl implements Database {
         }
       );
     });
-    if(this.forceForeignKeys) {
-      return connection.then(c => c.execute("PRAGMA foreignKeys=1").then(() => c))
-    } else {
-      return connection;
-    }
+    return connection;
   }
 }
