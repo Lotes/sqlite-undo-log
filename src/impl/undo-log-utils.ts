@@ -167,16 +167,12 @@ export class UndoLogUtilsImpl extends UtilsImpl implements UndoLogUtils {
     `, { $type: taskType });
   }
 
-
   async cleanUp(task: CleanUpTask): Promise<void> {
-    switch(task.type) {
-      case "TRIGGER":
-        await this.connection.run(`DROP TRIGGER ${task.name}`);
-        break;
-      default:
-        await this.connection.run(`DROP TABLE ${task.name}`);
-        break;
-    }
+    if(task.type === "TRIGGER") {
+      await this.connection.run(`DROP TRIGGER ${task.name}`);
+    } else {
+      await this.connection.run(`DROP TABLE ${task.name}`);
+    }        
   }
   
   async cleanUpAll(tasks: CleanUpTask[]): Promise<void> {
