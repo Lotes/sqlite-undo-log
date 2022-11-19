@@ -1,8 +1,9 @@
 import { Connection } from "../sqlite3";
-import { tables, ChangeType, TableColumn } from "../undo-log-tables";
+import { tables, ChangeType, TableColumn, CleanUpTasks, CleanUpTask, CleanUpTaskType } from "../undo-log-tables";
 import { UndoLogSetup } from "../undo-log-setup";
 import { UndoLogUtils } from "../undo-log-utils";
 
+const CLEANUP_TASK_NAME = CleanUpTasks.name;
 export class UndoLogSetupImpl implements UndoLogSetup {
   private connection: Connection;
   private prefix: string;
@@ -20,6 +21,11 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     if (!await this.isAlreadyInstalled()) {
       for (const table of tables) {
         await this.utils.createUndoLogTable(table.name, table);
+        await this.utils.insertBlindlyIntoUndoLogTable<CleanUpTask, 'id'>(CLEANUP_TASK_NAME, {
+          type: CLEANUP_TASK_NAME === table.name ? "ROOT" : "TABLE",
+          name: `${this.prefix}${table.name}`,
+          ref_table_name: null,
+        });
       }
     }
     return tables.map(t => `${this.prefix}${t.name}`);
@@ -31,10 +37,14 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     }
     return alreadyInstalled;
   }
+  private async cleanUp(type: CleanUpTaskType) {
+    const tasks = await this.utils.getCleanUpTasksByType('TRIGGER');
+    await this.utils.cleanUpAll(tasks);
+  }
   async uninstall(): Promise<void> {
-    for (const table of tables) {
-      await this.utils.dropUndoLogTable(table.name);
-    }
+    await this.cleanUp('TRIGGER');
+    await this.cleanUp('TABLE');
+    await this.cleanUp('ROOT');
   }
   async addTable(name: string, channelId: number): Promise<void> {
     await this.utils.getOrCreateReadyChannel(channelId);
@@ -142,8 +152,14 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     tableName: string,
     columns: TableColumn[]
   ) {
+    const triggerName = `${type.toLowerCase()}_${tableName}_trigger`;
+    await this.utils.insertBlindlyIntoUndoLogTable<CleanUpTask, 'id'>(CLEANUP_TASK_NAME, {
+      type: "TRIGGER",
+      name: triggerName,
+      ref_table_name: tableName,
+    });
     const queryTrigger = `
-      CREATE TRIGGER ${type.toLowerCase()}_${tableName}_trigger
+      CREATE TRIGGER ${triggerName}
         ${type === "DELETE" ? "BEFORE" : "AFTER"} ${type} ON ${tableName}
         FOR EACH ROW
         WHEN (${this.queryIsTablesChannelStatusEqRecording(tableName)})
@@ -156,6 +172,10 @@ export class UndoLogSetupImpl implements UndoLogSetup {
   }
 
   async removeTable(name: string): Promise<void> {
+    const tasks = await this.utils.getCleanUpTasksRelatedTo(name);
+    for (const task of tasks) {
+      await this.utils.cleanUp(task);
+    }
     await this.connection.run(
       `DELETE FROM ${this.prefix}tables WHERE name=$name`,
       {

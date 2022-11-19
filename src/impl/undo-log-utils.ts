@@ -5,6 +5,9 @@ import {
   ChannelStatus,
   Change,
   Channel,
+  CleanUpTask,
+  CleanUpTasks,
+  CleanUpTaskType,
 } from "../undo-log-tables";
 import { UndoLogError } from "../undo-log";
 import {
@@ -29,11 +32,14 @@ export class UndoLogUtilsImpl extends UtilsImpl implements UndoLogUtils {
       undone,
     });
   }
-  async insertIntoUndoLogTable<T extends Record<string, any>>(
+  insertIntoUndoLogTable<T extends Record<string, any>>(
     tableName: string,
     row: T
-  ): Promise<void> {
-    await this.insertIntoTable<T>(`${this.prefix}${tableName}`, row);
+  ): Promise<number> {
+    return this.insertIntoTable<T>(`${this.prefix}${tableName}`, row);
+  }
+  insertBlindlyIntoUndoLogTable<T extends Record<string, any>, I extends keyof T>(tableName: string, row: Omit<T, I>): Promise<number> {
+    return this.insertBlindlyIntoTable<T, I>(`${this.prefix}${tableName}`, row);
   }
   async createUndoLogTable(tableName: string, definition: TableDefinition) {
     const columns = this.createColumnDefinitions(definition);
@@ -42,7 +48,6 @@ export class UndoLogUtilsImpl extends UtilsImpl implements UndoLogUtils {
     const query = `CREATE TABLE ${this.prefix}${tableName} (${columns}${foreigns}${uniques});`;
     await this.connection.execute(query);
   }
-
   async getOrCreateReadyChannel(channel: number) {
     const parameters = { $channel: channel };
     await this.connection.run(
@@ -144,5 +149,39 @@ export class UndoLogUtilsImpl extends UtilsImpl implements UndoLogUtils {
         })
     );
     return record;
+  }
+
+  getCleanUpTasksRelatedTo(tableName: string): Promise<CleanUpTask[]> {
+    return this.connection.getAll<CleanUpTask>(`
+      SELECT *
+      FROM ${this.prefix}${CleanUpTasks.name}
+      WHERE ref_table_name = $tableName
+    `, { $tableName: tableName });
+  }
+
+  getCleanUpTasksByType(taskType: CleanUpTaskType): Promise<CleanUpTask[]> {
+    return this.connection.getAll<CleanUpTask>(`
+      SELECT *
+      FROM ${this.prefix}${CleanUpTasks.name}
+      WHERE type = $type
+    `, { $type: taskType });
+  }
+
+
+  async cleanUp(task: CleanUpTask): Promise<void> {
+    switch(task.type) {
+      case "TRIGGER":
+        await this.connection.run(`DROP TRIGGER ${task.name}`);
+        break;
+      default:
+        await this.connection.run(`DROP TABLE ${task.name}`);
+        break;
+    }
+  }
+  
+  async cleanUpAll(tasks: CleanUpTask[]): Promise<void> {
+    for (const task of tasks) {
+      await this.cleanUp(task);
+    }
   }
 }

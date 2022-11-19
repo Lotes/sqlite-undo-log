@@ -68,7 +68,15 @@ export class UtilsImpl implements Utils {
     const query = `INSERT INTO ${name} (${columns.join(
       ", "
     )}) VALUES (${values.join(", ")})`;
-    await this.connection.run(query, parameters);
+    const result = await this.connection.run(query, parameters);
+    return result.lastID!;
+  }
+
+  async insertBlindlyIntoTable<T extends Record<string, any>, I extends keyof T>(
+    name: string,
+    row: Omit<T, I>
+  ): Promise<number> {
+    return await this.insertIntoTable(name, row);
   }
 
   async getMetaTable(name: string) {
