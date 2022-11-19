@@ -13,14 +13,14 @@ describe("Public API single channel", () => {
   
     beforeEach(async () => {
       ({ logAssertions, logUtils, connection, api } = await setupBeforeEach());
-      log = await api.initializeSingle(0);
+      log = await api.initializeSingle();
     });
   
     afterEach(async () => {
       await connection.close();
     });
 
-    test('TODO', () => {
-      
+    test('Causual usecase', () => {
+      //TODO
     });
 });

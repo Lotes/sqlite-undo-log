@@ -30,7 +30,8 @@ export class UndoLogSetupPublicImpl implements UndoLogSetupPublic {
     }
     return result;
   }
-  async initializeSingle(channelId: number): Promise<UndoLogPublic> {
+  async initializeSingle(channel?: number): Promise<UndoLogPublic> {
+    const channelId = channel ?? 0;
     const logTableNames = await this.setup.install();
     const tables = _.difference(
       await this.utils.getAllTableNames(),

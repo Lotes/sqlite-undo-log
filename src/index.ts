@@ -15,7 +15,7 @@ import { UndoLogUtilsImpl } from "./impl/undo-log-utils";
 import { UtilsImpl } from "./impl/utils";
 
 export interface UndoLogConnectionServices {
-    prefix: string;
+    prefix: string|undefined;
     connection: Connection;
     logUtils: UndoLogUtils;
 }
@@ -35,7 +35,7 @@ export interface UndoLogTestServices {
     apiLog: UndoLogPublic;
 }
 
-function module(connection: Connection, prefix: string): Module<UndoLogServices & UndoLogConnectionServices> {
+function module(connection: Connection, prefix?: string): Module<UndoLogServices & UndoLogConnectionServices> {
     return {
         prefix:  () => prefix,
         connection: () => connection,
@@ -47,7 +47,7 @@ function module(connection: Connection, prefix: string): Module<UndoLogServices 
     };
 }
 
-export function createServices(connection: Connection, prefix: string) {
+export function createUndoLogServices(connection: Connection, prefix?: string) {
     return inject(module(connection, prefix)) as UndoLogServices & UndoLogConnectionServices;
 }
 
@@ -70,7 +70,7 @@ export type InitializeMultipleOptions = Record<number, string | string[]>;
 export type InitializeMultipleResult = Record<number, UndoLogPublic>;
 
 export interface UndoLogSetupPublic {
-  initializeSingle(channelId: number): Promise<UndoLogPublic>;
+  initializeSingle(channelId?: number): Promise<UndoLogPublic>;
   initializeMultiple(
     options: InitializeMultipleOptions
   ): Promise<InitializeMultipleResult>;
