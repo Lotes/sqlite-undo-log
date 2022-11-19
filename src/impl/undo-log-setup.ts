@@ -173,11 +173,11 @@ export class UndoLogSetupImpl implements UndoLogSetup {
 
   async removeTable(name: string): Promise<void> {
     const tasks = await this.utils.getCleanUpTasksRelatedTo(name);
-    for (const task of tasks) {
-      await this.utils.cleanUp(task);
-    }
-    await this.connection.run(
-      `DELETE FROM ${this.prefix}tables WHERE name=$name`,
+    await this.utils.cleanUpAll(tasks);
+    await this.connection.run(`
+      DELETE FROM ${this.prefix}tables
+      WHERE name=$name
+    `,
       {
         $name: name,
       }
