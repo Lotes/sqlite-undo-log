@@ -1,4 +1,4 @@
-import { SqliteType, TableColumn, TableDefinition } from "./tables";
+import { SqliteType, TableColumn, TableDefinition } from "./undo-log-tables";
 
 export type OldOrNew = "old"|"new";
 
@@ -28,6 +28,7 @@ export interface Utils {
     name: string,
     row: T
   ): Promise<void>;
+  getAllTableNames(): Promise<string[]>;
   getMetaTable(name: string): Promise<TableColumn[]>;
   doesTableExist(name: string): Promise<boolean>;
   hasTableId(name: string, id: number): Promise<boolean>;

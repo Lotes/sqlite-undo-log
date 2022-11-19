@@ -1,5 +1,5 @@
 import { Assertions } from "./assertions";
-import { Action, Change, Channel, ChannelStatus } from "./tables";
+import { Action, Change, Channel, ChannelStatus } from "./undo-log-tables";
 
 export interface UndoLogAssertions extends Assertions {
   assertChannelInStatus(

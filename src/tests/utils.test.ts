@@ -1,5 +1,6 @@
+import { Assertions } from "../assertions";
 import { Connection } from "../sqlite3";
-import { SqliteType } from "../tables";
+import { SqliteType } from "../undo-log-tables";
 import { UndoLogAssertions } from "../undo-log-assertions";
 import { Utils } from "../utils";
 import { setupBeforeEach, TableDefintion_OnlyOneType } from "./fixtures";
@@ -7,7 +8,7 @@ import { setupBeforeEach, TableDefintion_OnlyOneType } from "./fixtures";
 describe("utils", () => {
   let connection: Connection;
   let utils: Utils;
-  let assertions: UndoLogAssertions;
+  let assertions: Assertions;
 
   beforeEach(async () => {
     ({ assertions, utils, connection } = await setupBeforeEach());

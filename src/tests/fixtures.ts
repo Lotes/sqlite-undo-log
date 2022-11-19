@@ -1,12 +1,8 @@
 import { promises } from "fs";
 import path from "path";
-import { Database } from "../sqlite3";
-import { DatabaseImpl } from "../impl/sqlite3";
-import { UndoLogImpl } from "../impl/undo-log";
-import { UndoLogAssertionsImpl } from "../impl/undo-log-assertions";
-import { UndoLogSetupImpl } from "../impl/undo-log-setup";
-import { UndoLogUtilsImpl } from "../impl/undo-log-utils";
-import { SqliteType, TableDefinition } from "../tables";
+import { NodeSqlite3DatabaseImpl } from "../impl/sqlite3";
+import { SqliteType, TableDefinition } from "../undo-log-tables";
+import { createTestServices } from "..";
 
 export namespace AllTypeTable {
   export const Definition: TableDefinition = {
@@ -51,19 +47,9 @@ export async function setupBeforeEach() {
     "output",
     expect.getState().currentTestName.replace(/\s+/g, "_") + ".sqlite3"
   );
-  const database = new DatabaseImpl(fileName, true);
+  const database = new NodeSqlite3DatabaseImpl(fileName, true);
   const connection = await database.connect();
-  const utils = new UndoLogUtilsImpl(connection);
-  const setup = new UndoLogSetupImpl(connection, utils);
-  const log = new UndoLogImpl(connection, utils);
-  const assertions = new UndoLogAssertionsImpl(utils);
-  return {
-    connection,
-    utils,
-    setup,
-    log,
-    assertions,
-  };
+  return createTestServices(connection, 'undo_');
 }
 
 export const TableDefintion_OnlyOneType: (

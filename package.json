@@ -47,6 +47,9 @@
     "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
+    "@types/lodash": "^4.14.182",
+    "djinject": "^0.1.0",
+    "lodash": "^4.17.21",
     "ts-assert-unreachable": "^0.0.9"
   }
 }

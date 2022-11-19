@@ -5,7 +5,7 @@ import {
   ChannelStatus,
   Change,
   Channel,
-} from "../tables";
+} from "../undo-log-tables";
 import { UndoLogError } from "../undo-log";
 import {
   UndoLogUtils,
@@ -50,7 +50,8 @@ export class UndoLogUtilsImpl extends UtilsImpl implements UndoLogUtils {
       parameters
     );
     const row = await this.connection.getSingle<Channel>(
-      `SELECT * FROM ${this.prefix}channels`
+      `SELECT * FROM ${this.prefix}channels WHERE id=$channel`,
+      parameters
     );
     if (row == null) {
       throw new UndoLogError(`Unable to create or get a channel '${channel}'.`);

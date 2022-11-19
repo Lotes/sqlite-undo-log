@@ -1,4 +1,4 @@
-import { Action, Change, Channel, ChannelStatus } from "../tables";
+import { Action, Change, Channel, ChannelStatus } from "../undo-log-tables";
 import { UndoLogAssertions } from "../undo-log-assertions";
 import { UndoLogUtils } from "../undo-log-utils";
 import { OldOrNew } from "../utils";

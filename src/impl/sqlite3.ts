@@ -1,7 +1,7 @@
 import sqlite from "sqlite3";
 import { Database, Connection, RunResult, Parameters } from "../sqlite3";
 
-class AdapterDb {
+class NodeSqlite3AdapterDb {
   private db: sqlite.Database;
   constructor(db: sqlite.Database) {
     this.db = db;
@@ -58,11 +58,11 @@ class AdapterDb {
   }
 }
 
-export class ConnectionImpl implements Connection {
-  private db: AdapterDb;
+export class NodeSqlite3ConnectionImpl implements Connection {
+  private db: NodeSqlite3AdapterDb;
   private debug: boolean;
   constructor(db: sqlite.Database, debug: boolean = false) {
-    this.db = new AdapterDb(db);
+    this.db = new NodeSqlite3AdapterDb(db);
     this.debug = debug;
   }
   escapeString(str: string): string {
@@ -113,30 +113,34 @@ export class ConnectionImpl implements Connection {
   }
 }
 
-export class DatabaseImpl implements Database {
+export class NodeSqlite3DatabaseImpl implements Database {
   private fileName: string;
   private debug: boolean;
-  constructor(fileName?: string, debug?: boolean) {
+  private forceForeignKeys: boolean;
+  constructor(fileName?: string, debug?: boolean, forceForeignKeys?: boolean) {
     this.fileName = fileName || ":memory:";
     this.debug = debug ?? false;
+    this.forceForeignKeys = forceForeignKeys ?? true;
   }
   connect(): Promise<Connection> {
-    return new Promise((resolve, reject) => {
+    const connection = new Promise<Connection>((resolve, reject) => {
       const db = new sqlite.Database(
         this.fileName,
         sqlite.OPEN_READWRITE | sqlite.OPEN_CREATE,
         async (err) => {
           if (err == null) {
-            const connection: Connection = new ConnectionImpl(db, this.debug);
-            connection
-              .execute("PRAGMA foreignKeys=1")
-              .then(() => resolve(connection))
-              .catch(reject);
+            const connection: Connection = new NodeSqlite3ConnectionImpl(db, this.debug);
+            resolve(connection);
             return;
           }
           return reject(err);
         }
       );
     });
+    if(this.forceForeignKeys) {
+      return connection.then(c => c.execute("PRAGMA foreignKeys=1").then(() => c))
+    } else {
+      return connection;
+    }
   }
 }
