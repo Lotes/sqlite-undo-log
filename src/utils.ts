@@ -27,7 +27,11 @@ export interface Utils {
   insertIntoTable<T extends Record<string, any>>(
     name: string,
     row: T
-  ): Promise<void>;
+  ): Promise<number>;
+  insertBlindlyIntoTable<T extends Record<string, any>, I extends keyof T>(
+    name: string,
+    row: Omit<T, I>
+  ): Promise<number>;
   getAllTableNames(): Promise<string[]>;
   getMetaTable(name: string): Promise<TableColumn[]>;
   doesTableExist(name: string): Promise<boolean>;

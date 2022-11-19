@@ -4,6 +4,8 @@ import {
   Action,
   Change,
   Channel,
+  CleanUpTask,
+  CleanUpTaskType,
 } from "./undo-log-tables";
 import { ColumnValue, OldOrNew, Utils } from "./utils";
 
@@ -17,7 +19,11 @@ export interface UndoLogUtils extends Utils {
   insertIntoUndoLogTable<T extends Record<string, any>>(
     tableName: string,
     row: T
-  ): Promise<void>;
+  ): Promise<number>;
+  insertBlindlyIntoUndoLogTable<T extends Record<string, any>, I extends keyof T>(
+    tableName: string,
+    row: Omit<T, I>
+  ): Promise<number>;
   updateUndoLogTable<T extends Record<string, any> & { id: number }>(
     tableName: string,
     data: Partial<T> & { id: number }
@@ -36,4 +42,9 @@ export interface UndoLogUtils extends Utils {
     change: Change,
     type: OldOrNew
   ): Promise<Record<string, ColumnValue>>;
+  //clean up tasks
+  getCleanUpTasksRelatedTo(tableName: string): Promise<CleanUpTask[]>;
+  getCleanUpTasksByType(taskType: CleanUpTaskType): Promise<CleanUpTask[]>;
+  cleanUp(task: CleanUpTask): Promise<void>;
+  cleanUpAll(tasks: CleanUpTask[]): Promise<void>;
 }

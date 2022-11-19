@@ -222,6 +222,7 @@ export interface Column {
   type: string;
   table_id: number;
 }
+
 export const Values: TableDefinition = {
   name: "values",
   primaryKey: ["id"],
@@ -266,7 +267,38 @@ export interface Value {
   new_value: Buffer | null;
 }
 
+export const CleanUpTasks: TableDefinition = {
+  name: "clean_up_tasks",
+  primaryKey: ["id"],
+  columns: {
+    id: "INTEGER",
+    type: {
+      type: "TEXT",
+      canBeNull: false,
+      check: "type IN ('ROOT', 'TABLE', 'TRIGGER')",
+    },
+    name: {
+      type: 'TEXT',
+      canBeNull: false
+    },
+    ref_table_name: {
+      type: 'TEXT',
+      canBeNull: true
+    },
+  },
+};
+
+export type CleanUpTaskType = 'ROOT'|'TABLE'|'TRIGGER';
+
+export interface CleanUpTask {
+  id: number;
+  type: CleanUpTaskType;
+  name: string;
+  ref_table_name: string|null;
+}
+
 export const tables = [
+  CleanUpTasks,
   Channels,
   Categories,
   Actions,

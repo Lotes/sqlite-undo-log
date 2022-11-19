@@ -68,7 +68,15 @@ export class UtilsImpl implements Utils {
     const query = `INSERT INTO ${name} (${columns.join(
       ", "
     )}) VALUES (${values.join(", ")})`;
-    await this.connection.run(query, parameters);
+    const result = await this.connection.run(query, parameters);
+    return result.lastID!;
+  }
+
+  async insertBlindlyIntoTable<T extends Record<string, any>, I extends keyof T>(
+    name: string,
+    row: Omit<T, I>
+  ): Promise<number> {
+    return await this.insertIntoTable(name, row);
   }
 
   async getMetaTable(name: string) {
@@ -191,7 +199,7 @@ export class UtilsImpl implements Utils {
       }
       const asStringLiteral = /^'([^']*)'$/gi.exec(arg);
       if (asStringLiteral != null) {
-        return asStringLiteral[1].substr(1, asStringLiteral[1].length - 2);
+        return asStringLiteral[1].substring(1, asStringLiteral[1].length - 1);
       }
       const asBufferLiteral = /^X'([0-9A-F]+)'$/gi.exec(arg);
       if (asBufferLiteral != null) {
@@ -247,7 +255,7 @@ export class UtilsImpl implements Utils {
     throw new UndoLogError("Unable to unquote blob!");
   }
   private unquoteText(value: string): string {
-    return value.substr(1, value.length - 2).replace(/''/g, "'");
+    return value.substring(1, value.length - 1).replace(/''/g, "'");
   }
 
   async getAllTableNames(): Promise<string[]> {
