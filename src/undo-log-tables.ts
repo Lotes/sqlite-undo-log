@@ -365,5 +365,6 @@ export const tables = [
   Tables,
   Columns,
   Values,
-  Configs
+  Configs,
+  Logs
 ];

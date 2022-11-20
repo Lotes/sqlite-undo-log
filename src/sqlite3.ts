@@ -1,5 +1,3 @@
-import { ColumnValue } from "./utils";
-
 export type Parameters = Record<string, string | number | boolean | null>;
 export interface RunResult {
   lastID?: number;

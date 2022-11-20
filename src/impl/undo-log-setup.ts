@@ -1,5 +1,5 @@
 import { Connection, ConnectionListener, WeakConnection } from "../sqlite3";
-import { tables, ChangeType, TableColumn, CleanUpTasks, CleanUpTask, CleanUpTaskType, ConfigNames, Logs } from "../undo-log-tables";
+import { tables, ChangeType, TableColumn, CleanUpTasks, CleanUpTask, CleanUpTaskType, ConfigNames, Logs, Changes, Configs } from "../undo-log-tables";
 import { UndoLogSetup } from "../undo-log-setup";
 import { UndoLogUtils } from "../undo-log-utils";
 
@@ -18,7 +18,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     this.listener = async event => {
       await this.logger.run(`
         INSERT INTO ${prefix}${Logs.name} (timestamp, query, parameters, location)
-        VALUES (strftime('%Y-%m-%d %H-%M-%f','now'), $query, $parameters, $location)`,
+        VALUES (${this.timestamp()}, $query, $parameters, $location)`,
         {
           $query: event.query,
           $parameters: JSON.stringify(event.parameters),
@@ -26,6 +26,9 @@ export class UndoLogSetupImpl implements UndoLogSetup {
         }
       );
     }
+  }
+  private timestamp(): string {
+    return "strftime('%Y-%m-%d %H-%M-%f','now')";
   }
   async enableDebugMode(enabled: boolean): Promise<void> {
     await this.utils.setConfig(ConfigNames.DEBUG, enabled?1:0);
@@ -127,7 +130,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     return `
       INSERT INTO ${
         this.prefix
-      }changes (type, old_row_id, new_row_id, action_id, order_index, table_id)
+      }${Changes.name} (type, old_row_id, new_row_id, action_id, order_index, table_id)
       SELECT ${this.connection.escapeString(type)}, ${
       recordOld ? "OLD.rowid" : "NULL"
     }, ${
@@ -144,6 +147,25 @@ export class UndoLogSetupImpl implements UndoLogSetup {
           WHERE ma.channel_id=ch.id
         )
       GROUP BY a.id;
+    `;
+  }
+
+  logChange(triggerName: string): string {
+    return `
+      INSERT INTO ${this.prefix}${Logs.name} (timestamp, query, parameters, location)
+      SELECT
+        ${this.timestamp()},
+        'INSERT INTO ${this.prefix}${Changes.name} (type, old_row_id, new_row_id, action_id, order_index, table_id) VALUES ($type, $old_row_id, $new_row_id, $action_id, $order_index, $table_id)', 
+        (
+          SELECT json_object(
+            ${Object.keys(Changes.columns).map(c => `'$${c}', ${c}`).join(',\r\n            ')}
+          )
+          FROM ${this.prefix}${Changes.name}
+          WHERE id=last_insert_rowid() LIMIT 1
+        ),
+        '${triggerName}'
+      FROM ${this.prefix}${Configs.name}
+      WHERE name='${ConfigNames.DEBUG} AND value=1';
     `;
   }
 
@@ -191,6 +213,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
         WHEN (${this.queryIsTablesChannelStatusEqRecording(tableName)})
       BEGIN
         ${this.queryAddChange(type, tableName)}
+        ${this.logChange(triggerName)}
         ${this.queryAddValues(type, columns)}
       END;
     `;
