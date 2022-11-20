@@ -1,16 +1,36 @@
-import { Connection } from "../sqlite3";
-import { tables, ChangeType, TableColumn, CleanUpTasks, CleanUpTask, CleanUpTaskType } from "../undo-log-tables";
+import { Connection, ConnectionListener, WeakConnection } from "../sqlite3";
+import { tables, ChangeType, TableColumn, CleanUpTasks, CleanUpTask, CleanUpTaskType, ConfigNames, Logs } from "../undo-log-tables";
 import { UndoLogSetup } from "../undo-log-setup";
 import { UndoLogUtils } from "../undo-log-utils";
 
 const CLEANUP_TASK_NAME = CleanUpTasks.name;
 export class UndoLogSetupImpl implements UndoLogSetup {
+  private logger: WeakConnection;
+  private listener: ConnectionListener;
+  private debug: boolean = false;
   constructor(
     private connection: Connection,
     private utils: UndoLogUtils,
     private forceForeignKeys: boolean = true,
     private prefix: string = "undo_"
-  ) {}
+  ) {
+    this.logger = connection.clone();
+    this.listener = async event => {
+      await this.logger.run(`
+        INSERT INTO ${prefix}${Logs.name} (timestamp, query, parameters, location)
+        VALUES (strftime('%Y-%m-%d %H-%M-%f','now'), $query, $parameters, $location)`,
+        {
+          $query: event.query,
+          $parameters: JSON.stringify(event.parameters),
+          $location: event.location,
+        }
+      );
+    }
+  }
+  async enableDebugMode(enabled: boolean): Promise<void> {
+    await this.utils.setConfig(ConfigNames.DEBUG, enabled?1:0);
+    await this.syncDebugMode();
+  }
   async install(): Promise<string[]> {
     if(this.forceForeignKeys) {
       await this.connection.execute("PRAGMA foreignKeys=1");
@@ -25,7 +45,16 @@ export class UndoLogSetupImpl implements UndoLogSetup {
         });
       }
     }
+    await this.syncDebugMode();
     return tables.map(t => `${this.prefix}${t.name}`);
+  }
+  async syncDebugMode() {
+    this.debug = (await this.utils.getConfig(ConfigNames.DEBUG)) === 1;
+    if(this.debug) {
+      this.connection.addConnectionListener(this.listener);
+    } else {
+      this.connection.removeConnectionListener(this.listener);
+    }
   }
   private async isAlreadyInstalled(): Promise<boolean> {
     let alreadyInstalled = true;

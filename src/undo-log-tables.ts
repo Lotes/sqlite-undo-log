@@ -311,6 +311,7 @@ export const Configs: TableDefinition = {
       canBeNull: false
     },
   },
+  uniques: [['name']],
 };
 
 export interface Config {
@@ -319,11 +320,19 @@ export interface Config {
   value: number;
 }
 
+export const ConfigNames = {
+  DEBUG: 'DEBUG'
+} as const;
+
 export const Logs: TableDefinition = {
   name: "logs",
   primaryKey: ["id"],
   columns: {
     id: 'INTEGER',
+    timestamp: {
+      type: "TEXT",
+      canBeNull: false,
+    },
     query: {
       type: "TEXT",
       canBeNull: false,
@@ -341,6 +350,7 @@ export const Logs: TableDefinition = {
 
 export interface Log {
   id: number;
+  timestamp: string;
   query: string;
   parameters: string;
   location: string;

@@ -8,6 +8,7 @@ import {
   CleanUpTask,
   CleanUpTasks,
   CleanUpTaskType,
+  Configs,
 } from "../undo-log-tables";
 import { UndoLogError } from "../undo-log";
 import {
@@ -179,5 +180,22 @@ export class UndoLogUtilsImpl extends UtilsImpl implements UndoLogUtils {
     for (const task of tasks) {
       await this.cleanUp(task);
     }
+  }
+
+  async getConfig(name: string): Promise<number> {
+    const row = await this.connection.getSingle<{value: number}>(`
+      SELECT value
+      FROM ${this.prefix}${Configs.name}
+      WHERE name=$name
+      LIMIT 1
+    `, { $name: name });
+    return row?.value ?? 0;
+  }
+
+  async setConfig(name: string, value: number): Promise<void> {
+    await this.connection.run(`
+      INSERT OR REPLACE INTO ${this.prefix}${Configs.name} (name, value)
+      VALUES ($name, $value)
+    `, { $name: name, $value: value });
   }
 }

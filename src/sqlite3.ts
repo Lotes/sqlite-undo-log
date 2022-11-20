@@ -11,7 +11,7 @@ export interface ConnectionListenerEvent {
   parameters: Parameters;
   location: string;
 }
-export type ConnectionListener = (event: ConnectionListenerEvent) => void;
+export type ConnectionListener = (event: ConnectionListenerEvent) => Promise<void>;
 
 export interface WeakConnection {
   escapeString(str: string): string;

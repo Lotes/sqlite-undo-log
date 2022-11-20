@@ -105,7 +105,9 @@ export class NodeSqlite3ConnectionImpl implements Connection {
       query,
       parameters
     };
-    this.listeners.forEach(ls => ls(event));
+    for (const listener of this.listeners) {
+      await listener(event);
+    }
   }
 }
 
