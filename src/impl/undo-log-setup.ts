@@ -224,7 +224,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     columns: TableColumn[]
   ) {
     const triggerName = `${type.toLowerCase()}_${tableName}_trigger`;
-    const variableName = triggerName + '_variables_table_last_change_id';
+    const variableName = triggerName + '_last_change_id';
     const getVariableQuery = this.scriptGetVariableQuery(variableName);
     await this.utils.insertBlindlyIntoUndoLogTable<CleanUpTask, 'id'>(CLEANUP_TASK_NAME, {
       type: "TRIGGER",
@@ -244,12 +244,11 @@ export class UndoLogSetupImpl implements UndoLogSetup {
         ${this.scriptLogValues(triggerName, getVariableQuery)}
       END;
     `;
-    console.log(queryTrigger);
     return this.connection.execute(queryTrigger);
   }
 
   scriptSetVariable(name: string, subQuery: string) {
-    return `INSERT INTO ${this.prefix}${Variables.name} (name, value) VALUES (${this.connection.escapeString(name)}, ${subQuery});`;
+    return `INSERT OR REPLACE INTO ${this.prefix}${Variables.name} (name, value) VALUES (${this.connection.escapeString(name)}, ${subQuery});`;
   }
 
   scriptGetVariableQuery(name: string) {
