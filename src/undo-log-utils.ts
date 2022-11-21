@@ -47,4 +47,7 @@ export interface UndoLogUtils extends Utils {
   getCleanUpTasksByType(taskType: CleanUpTaskType): Promise<CleanUpTask[]>;
   cleanUp(task: CleanUpTask): Promise<void>;
   cleanUpAll(tasks: CleanUpTask[]): Promise<void>;
+  //config
+  getConfig(name: string): Promise<number>;
+  setConfig(name: string, value: number): Promise<void>;
 }

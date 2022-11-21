@@ -297,6 +297,89 @@ export interface CleanUpTask {
   ref_table_name: string|null;
 }
 
+export const Configs: TableDefinition = {
+  name: "configs",
+  primaryKey: ["id"],
+  columns: {
+    id: "INTEGER",
+    name: {
+      type: "TEXT",
+      canBeNull: false,
+    },
+    value: {
+      type: 'INTEGER',
+      canBeNull: false
+    },
+  },
+  uniques: [['name']],
+};
+
+export interface Config {
+  id: number;
+  name: string;
+  value: number;
+}
+
+export const ConfigNames = {
+  DEBUG: 'DEBUG'
+} as const;
+
+export const Logs: TableDefinition = {
+  name: "logs",
+  primaryKey: ["id"],
+  columns: {
+    id: 'INTEGER',
+    timestamp: {
+      type: "TEXT",
+      canBeNull: false,
+    },
+    query: {
+      type: "TEXT",
+      canBeNull: false,
+    },
+    parameters: {
+      type: 'TEXT',
+      canBeNull: false
+    },
+    location: {
+      type: 'TEXT',
+      canBeNull: false
+    },
+  },
+};
+
+export interface Log {
+  id: number;
+  timestamp: string;
+  query: string;
+  parameters: string;
+  location: string;
+}
+
+export const Variables: TableDefinition = {
+  name: "variables",
+  primaryKey: ["id"],
+  columns: {
+    id: 'INTEGER',
+    name: {
+      type: 'TEXT',
+      canBeNull: false
+    },
+    value: {
+      type: "INTEGER",
+      canBeNull: false,
+    },
+  },
+  uniques: [['name']]
+};
+
+export interface Variable {
+  id: number;
+  name: string;
+  value: number;
+}
+
+
 export const tables = [
   CleanUpTasks,
   Channels,
@@ -305,5 +388,8 @@ export const tables = [
   Changes,
   Tables,
   Columns,
-  Values
+  Values,
+  Configs,
+  Logs,
+  Variables
 ];

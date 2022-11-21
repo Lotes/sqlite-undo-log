@@ -2,7 +2,7 @@ import { promises } from "fs";
 import path from "path";
 import { NodeSqlite3DatabaseImpl } from "../impl/sqlite3";
 import { SqliteType, TableDefinition } from "../undo-log-tables";
-import { createTestServices } from "..";
+import { createTestServices } from "./..";
 
 export namespace AllTypeTable {
   export const Definition: TableDefinition = {
@@ -47,7 +47,7 @@ export async function setupBeforeEach() {
     "output",
     expect.getState().currentTestName.replace(/\s+/g, "_") + ".sqlite3"
   );
-  const database = new NodeSqlite3DatabaseImpl(fileName, true);
+  const database = new NodeSqlite3DatabaseImpl(fileName);
   const connection = await database.connect();
   return createTestServices(connection, 'undo_');
 }

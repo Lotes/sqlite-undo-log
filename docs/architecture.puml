@@ -13,9 +13,20 @@ component UndoLogUtils
 component UndoLogAssertions
 component UndoLogSetup
 component UndoLog
+component UndoLogPublic
+component UndoLogSetupPublic
+actor User
+actor Tester
 
 Assertions --> Utils
 UndoLogUtils --> Utils
 UndoLogAssertions --> Assertions
 UndoLogSetup --> UndoLogUtils
 UndoLog --> UndoLogUtils
+UndoLogPublic --> UndoLog
+UndoLogSetupPublic --> UndoLogSetup
+UndoLogSetupPublic --> UndoLogPublic : creates
+
+Tester .. UndoLogSetupPublic : api 
+Tester .. UndoLogAssertions
+User .. UndoLogSetupPublic : api

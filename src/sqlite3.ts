@@ -4,8 +4,14 @@ export interface RunResult {
   changes?: number;
 }
 
-export interface Connection {
-  close(): Promise<void>;
+export interface ConnectionListenerEvent {
+  query: string;
+  parameters: Parameters;
+  location: string;
+}
+export type ConnectionListener = (event: ConnectionListenerEvent) => Promise<void>;
+
+export interface WeakConnection {
   escapeString(str: string): string;
   execute(query: string): Promise<void>;
   run(query: string, parameters?: Parameters): Promise<RunResult>;
@@ -13,6 +19,17 @@ export interface Connection {
   getAll<T>(query: string, parameters?: Parameters): Promise<T[]>;
 }
 
+export interface Connection extends WeakConnection {
+  addConnectionListener(listener: ConnectionListener): void;
+  removeConnectionListener(listener: ConnectionListener): void;
+  close(): Promise<void>;
+  clone(): WeakConnection;
+}
+
 export interface Database {
   connect(): Promise<Connection>;
+}
+
+export interface Logger {
+  logQuery(event: ConnectionListenerEvent): Promise<void>;
 }

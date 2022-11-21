@@ -19,6 +19,7 @@ describe("UndoLog", () => {
     ({ logSetup, logAssertions, assertions, utils, log, connection } =
       await setupBeforeEach());
     await logSetup.install();
+    await logSetup.enableDebugMode(true);
   });
 
   afterEach(async () => {
