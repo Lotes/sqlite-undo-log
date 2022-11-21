@@ -74,6 +74,11 @@ object Config {
   debug: boolean;
 }
 
+class Variables {
+  name: string
+  value: int
+}
+
 note as NoteLogs
 when Config.debug=true
 end note
