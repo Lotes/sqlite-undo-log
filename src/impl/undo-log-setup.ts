@@ -1,5 +1,5 @@
 import { Connection, ConnectionListener, WeakConnection } from "../sqlite3";
-import { tables, ChangeType, TableColumn, CleanUpTasks, CleanUpTask, CleanUpTaskType, ConfigNames, Logs, Changes, Configs } from "../undo-log-tables";
+import { tables, ChangeType, TableColumn, CleanUpTasks, CleanUpTask, CleanUpTaskType, ConfigNames, Logs, Changes, Configs, Channels, Actions, Tables, Values, Variables } from "../undo-log-tables";
 import { UndoLogSetup } from "../undo-log-setup";
 import { UndoLogUtils } from "../undo-log-utils";
 
@@ -18,7 +18,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     this.listener = async event => {
       await this.logger.run(`
         INSERT INTO ${prefix}${Logs.name} (timestamp, query, parameters, location)
-        VALUES (${this.timestamp()}, $query, $parameters, $location)`,
+        VALUES (${this.scriptTimestamp()}, $query, $parameters, $location)`,
         {
           $query: event.query,
           $parameters: JSON.stringify(event.parameters),
@@ -27,7 +27,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
       );
     }
   }
-  private timestamp(): string {
+  private scriptTimestamp(): string {
     return "strftime('%Y-%m-%d %H-%M-%f','now')";
   }
   async enableDebugMode(enabled: boolean): Promise<void> {
@@ -124,7 +124,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
       `;
   }
 
-  private queryAddChange(type: ChangeType, tableName: string): string {
+  private scriptAddChange(type: ChangeType, tableName: string): string {
     const recordOld = type !== "INSERT";
     const recordNew = type !== "DELETE";
     return `
@@ -136,10 +136,10 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     }, ${
       recordNew ? "NEW.rowid" : "NULL"
     }, a.id, MAX(IFNULL(c.order_index,0))+1, t.id
-      FROM ${this.prefix}tables t
-        INNER JOIN ${this.prefix}channels ch ON t.channel_id=ch.id
-        INNER JOIN ${this.prefix}actions a ON a.channel_id=ch.id
-        LEFT JOIN ${this.prefix}changes c ON a.id=c.action_id
+      FROM ${this.prefix}${Tables.name} t
+        INNER JOIN ${this.prefix}${Channels.name} ch ON t.channel_id=ch.id
+        INNER JOIN ${this.prefix}${Actions.name} a ON a.channel_id=ch.id
+        LEFT JOIN ${this.prefix}${Changes.name} c ON a.id=c.action_id
       WHERE t.name=${this.connection.escapeString(tableName)}
         AND a.order_index=(
           SELECT MAX(ma.order_index)
@@ -150,26 +150,48 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     `;
   }
 
-  logChange(triggerName: string): string {
+  scriptLogChange(triggerName: string, getChangeIdQuery: string): string {
     return `
       INSERT INTO ${this.prefix}${Logs.name} (timestamp, query, parameters, location)
       SELECT
-        ${this.timestamp()},
+        ${this.scriptTimestamp()},
         'INSERT INTO ${this.prefix}${Changes.name} (type, old_row_id, new_row_id, action_id, order_index, table_id) VALUES ($type, $old_row_id, $new_row_id, $action_id, $order_index, $table_id)', 
         (
           SELECT json_object(
             ${Object.keys(Changes.columns).map(c => `'$${c}', ${c}`).join(',\r\n            ')}
           )
           FROM ${this.prefix}${Changes.name}
-          WHERE id=last_insert_rowid() LIMIT 1
+          WHERE id=(${getChangeIdQuery}) LIMIT 1
         ),
         '${triggerName}'
       FROM ${this.prefix}${Configs.name}
-      WHERE name='${ConfigNames.DEBUG} AND value=1';
+      WHERE name=${this.connection.escapeString(ConfigNames.DEBUG)} AND value=1;
     `;
   }
 
-  private queryAddValues(type: ChangeType, columns: TableColumn[]) {
+  scriptLogValues(location: string, getChangeIdQuery: string) {
+    return `
+      INSERT INTO ${this.prefix}${Logs.name} (timestamp, query, parameters, location)
+      SELECT
+        ${this.scriptTimestamp()},
+        'INSERT INTO ${this.prefix}${Values.name} (column_id, change_id, old_value, new_value) VALUES ($column_id, $change_id, $old_value, $new_value)', 
+        json_object(
+          '$column_id', v.column_id,
+          '$change_id', v.change_id,
+          '$old_value', v.old_value,
+          '$new_value', v.new_value
+        ),
+        '${location}'
+      FROM
+        ${this.prefix}${Values.name} v,
+        ${this.prefix}${Configs.name} c
+      WHERE
+        v.change_id=(${getChangeIdQuery})
+        AND c.name=${this.connection.escapeString(ConfigNames.DEBUG)} AND c.value=1;
+    `;
+  }
+
+  private scriptAddValues(type: ChangeType, columns: TableColumn[], getChangeIdQuery: string) {
     const recordOld = type !== "INSERT";
     const recordNew = type !== "DELETE";
     const oldValue = (c: TableColumn) =>
@@ -181,10 +203,11 @@ export class UndoLogSetupImpl implements UndoLogSetup {
         recordOld && recordNew ? ` AND OLD.${c.name} <> NEW.${c.name}` : "";
       return `WHERE id=${c.id}${notEqual}`;
     };
-    const createSelect = (c: TableColumn) =>
-      `SELECT ${c.id}, last_insert_rowid()${oldValue(c)}${newValue(c)} FROM ${
-        this.prefix
-      }columns ${where(c)}`;
+    const createSelect = (c: TableColumn) => `
+      SELECT ${c.id}, (${getChangeIdQuery})${oldValue(c)}${newValue(c)}
+      FROM ${this.prefix}columns
+      ${where(c)}
+    `;
     const oldColumn = recordOld ? ", old_value" : "";
     const newColumn = recordNew ? ", new_value" : "";
     return `
@@ -201,6 +224,8 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     columns: TableColumn[]
   ) {
     const triggerName = `${type.toLowerCase()}_${tableName}_trigger`;
+    const variableName = triggerName + '_variables_table_last_change_id';
+    const getVariableQuery = this.scriptGetVariableQuery(variableName);
     await this.utils.insertBlindlyIntoUndoLogTable<CleanUpTask, 'id'>(CLEANUP_TASK_NAME, {
       type: "TRIGGER",
       name: triggerName,
@@ -212,12 +237,28 @@ export class UndoLogSetupImpl implements UndoLogSetup {
         FOR EACH ROW
         WHEN (${this.queryIsTablesChannelStatusEqRecording(tableName)})
       BEGIN
-        ${this.queryAddChange(type, tableName)}
-        ${this.logChange(triggerName)}
-        ${this.queryAddValues(type, columns)}
+        ${this.scriptAddChange(type, tableName)}
+        ${this.scriptSetVariable(variableName, 'last_insert_rowid()')}
+        ${this.scriptLogChange(triggerName, getVariableQuery)}
+        ${this.scriptAddValues(type, columns, getVariableQuery)}
+        ${this.scriptLogValues(triggerName, getVariableQuery)}
       END;
     `;
+    console.log(queryTrigger);
     return this.connection.execute(queryTrigger);
+  }
+
+  scriptSetVariable(name: string, subQuery: string) {
+    return `INSERT INTO ${this.prefix}${Variables.name} (name, value) VALUES (${this.connection.escapeString(name)}, ${subQuery});`;
+  }
+
+  scriptGetVariableQuery(name: string) {
+    return `
+      SELECT value
+      FROM ${this.prefix}${Variables.name}
+      WHERE name=${this.connection.escapeString(name)}
+      LIMIT 1
+    `;
   }
 
   async removeTable(name: string): Promise<void> {

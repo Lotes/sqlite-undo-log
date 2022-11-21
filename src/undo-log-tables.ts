@@ -356,6 +356,30 @@ export interface Log {
   location: string;
 }
 
+export const Variables: TableDefinition = {
+  name: "variables",
+  primaryKey: ["id"],
+  columns: {
+    id: 'INTEGER',
+    name: {
+      type: 'TEXT',
+      canBeNull: false
+    },
+    value: {
+      type: "INTEGER",
+      canBeNull: false,
+    },
+  },
+  uniques: [['name']]
+};
+
+export interface Variable {
+  id: number;
+  name: string;
+  value: number;
+}
+
+
 export const tables = [
   CleanUpTasks,
   Channels,
@@ -366,5 +390,6 @@ export const tables = [
   Columns,
   Values,
   Configs,
-  Logs
+  Logs,
+  Variables
 ];
