@@ -224,8 +224,9 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     columns: TableColumn[]
   ) {
     const triggerName = `${type.toLowerCase()}_${tableName}_trigger`;
-    const variableName = triggerName + '_last_change_id';
-    const getVariableQuery = this.scriptGetVariableQuery(variableName);
+    const variableName = triggerName + '_last_change_id_';
+    const variableNameExpression = this.connection.escapeString(variableName)+" || "+(type === "DELETE" ? 'OLD' : 'NEW')+'.rowid';
+    const getVariableQuery = this.scriptGetVariableQuery(variableNameExpression);
     await this.utils.insertBlindlyIntoUndoLogTable<CleanUpTask, 'id'>(CLEANUP_TASK_NAME, {
       type: "TRIGGER",
       name: triggerName,
@@ -238,37 +239,42 @@ export class UndoLogSetupImpl implements UndoLogSetup {
         WHEN (${this.queryIsTablesChannelStatusEqRecording(tableName)})
       BEGIN
         ${this.scriptAddChange(type, tableName)}
-        ${this.scriptSetVariable(variableName, 'last_insert_rowid()')}
+        ${this.scriptSetVariable(variableNameExpression, 'last_insert_rowid()')}
         ${this.scriptLogChange(triggerName, getVariableQuery)}
         ${this.scriptAddValues(type, columns, getVariableQuery)}
         ${this.scriptLogValues(triggerName, getVariableQuery)}
+        ${this.scriptUnsetVariable(variableNameExpression)}
       END;
     `;
     return this.connection.execute(queryTrigger);
   }
 
-  scriptSetVariable(name: string, subQuery: string) {
-    return `INSERT OR REPLACE INTO ${this.prefix}${Variables.name} (name, value) VALUES (${this.connection.escapeString(name)}, ${subQuery});`;
+  scriptSetVariable(nameQuery: string, subQuery: string) {
+    return `INSERT OR REPLACE INTO ${this.prefix}${Variables.name} (name, value) VALUES (${nameQuery}, ${subQuery});`;
   }
 
-  scriptGetVariableQuery(name: string) {
+  scriptUnsetVariable(nameQuery: string) {
+    return `DELETE FROM ${this.prefix}${Variables.name} WHERE name=${nameQuery};`;
+  }
+
+  scriptGetVariableQuery(nameQuery: string) {
     return `
       SELECT value
       FROM ${this.prefix}${Variables.name}
-      WHERE name=${this.connection.escapeString(name)}
+      WHERE name=${nameQuery}
       LIMIT 1
     `;
   }
 
-  async removeTable(name: string): Promise<void> {
-    const tasks = await this.utils.getCleanUpTasksRelatedTo(name);
+  async removeTable(nameQuery: string): Promise<void> {
+    const tasks = await this.utils.getCleanUpTasksRelatedTo(nameQuery);
     await this.utils.cleanUpAll(tasks);
     await this.connection.run(`
       DELETE FROM ${this.prefix}tables
-      WHERE name=$name
+      WHERE name=${nameQuery}
     `,
       {
-        $name: name,
+        $name: nameQuery,
       }
     );
   }
