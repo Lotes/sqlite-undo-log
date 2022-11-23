@@ -393,3 +393,41 @@ export const tables = [
   Logs,
   Variables
 ];
+
+
+export type ReferenceType = 'null'|'notnull';
+export type ColumnDescriptor = [SqliteType, ReferenceType];
+export type Columns = Record<string, Readonly<ColumnDescriptor>>;
+export interface Entity<C extends Columns, PK extends keyof C> {
+  name: string;
+  keys: PK[];
+  columns: C;
+  checks?: [keyof C, string][];
+  withCheckEnum<E extends string>(column: keyof C, enumLiterals: E[]): Entity<C, PK>;
+}
+
+const Variables2 = table('variables', ['id'], {
+  id: ['INTEGER', 'notnull'],
+  name: ['TEXT', 'notnull'],
+  value: ['INTEGER', 'notnull']
+});
+
+const Channels2 = table('channels', ['id'], {
+  id: ['INTEGER', 'notnull'],
+  status: ['TEXT', 'notnull'],
+}).withCheckEnum('status', ['READY','RECORDING','UNDOING','REDOING']);
+
+function table<C extends Columns, PK extends keyof C>(name: string, keys: PK[], columns: C): Entity<C, PK> {
+  function withCheckEnum<E extends string>(this: Entity<C, PK>, column: keyof C, literals: E[]): Entity<C, PK> {
+      return {
+        ...this,
+        checks: (this.checks ?? []).concat([[column, `${column.toString()} IN (${literals.map(li=>`'${li}'`).join(', ')})`]])
+      }
+  }
+  return {
+    name,
+    columns,
+    keys,
+    withCheckEnum
+  };
+}
