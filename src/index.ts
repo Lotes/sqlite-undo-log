@@ -30,29 +30,33 @@ import { SetupServicesImpl } from "./impl/utils/setup-services";
 import { TableServicesImpl } from "./impl/utils/table-services";
 import { TeardownServicesImpl } from "./impl/utils/teardown-services";
 
-export interface UndoLogConnectionServices {
-  prefix: string;
+export interface UndoLogServices {
   connection: Connection;
-}
-
-export interface UndoLogServices extends UndoLogConnectionServices {
-  setup: SetupServices;
-  teardown: TeardownServices;
-  config: ConfigurationServices;
-  tables: TableServices;
-  channels: ChannelServices;
-  actions: ActionServices;
+  installations: {
+    forceForeignKeys: boolean;
+    prefix: string;
+    setup: SetupServices;
+    teardown: TeardownServices;  
+  }
+  internals: {
+    config: ConfigurationServices;
+    tables: TableServices;
+    channels: ChannelServices;
+    actions: ActionServices;
+    logFactory: () => UndoLog;
+    logSetup: UndoLogSetup;
+  }
   databases: {
     definitions: DatabaseDefinitionServices;
     manipulations: DatabaseManipulationServices;
     queries: DatabaseQueryServices;
     utils: DatabaseUtilitiesServices;
-  };
-  forceForeignKeys: boolean;
-  logFactory: () => UndoLog;
-  logSetup: UndoLogSetup;
-  api: UndoLogSetupPublic;
-  apiLogFactory: (channelId: number) => UndoLogPublic;
+  }
+  api: {
+    setup: UndoLogPublicSetup;
+    logFactory: (channelId: number) => UndoLogPublic;
+  }
+
 }
 
 export interface UndoLogTestServices extends UndoLogServices {
@@ -67,32 +71,37 @@ function module(
   prefix: string
 ): Module<UndoLogServices, UndoLogServices> {
   const module: Module<UndoLogServices, UndoLogServices> = {
-    forceForeignKeys: () => true,
-    prefix: () => prefix,
-    connection: () => connection,
-    logFactory: (srv) => () => new UndoLogImpl(srv),
-    logSetup: (srv) => new UndoLogSetupImpl(srv),
-    api: (srv) => new UndoLogSetupPublicImpl(srv),
-    apiLogFactory: (srv) => (channelId: number) => new UndoLogPublicImpl(srv, channelId),
-    setup: srv => new SetupServicesImpl(srv),
-    teardown: srv => new TeardownServicesImpl(srv),
-    config: srv => new ConfigurationServicesImpl(srv),
-    tables: srv => new TableServicesImpl(srv),
-    channels: srv => new ChannelServicesImpl(srv),
-    actions: srv => new ActionServicesImpl(srv),
+    connection,
+    installations: {
+      prefix,
+      forceForeignKeys: () => true,
+      setup: srv => new SetupServicesImpl(srv),
+      teardown: srv => new TeardownServicesImpl(srv),
+    },
+    internals: {
+      config: srv => new ConfigurationServicesImpl(srv),
+      tables: srv => new TableServicesImpl(srv),
+      channels: srv => new ChannelServicesImpl(srv),
+      actions: srv => new ActionServicesImpl(srv),
+      logFactory: (srv) => () => new UndoLogImpl(srv),
+      logSetup: (srv) => new UndoLogSetupImpl(srv),
+    },
     databases: {
       definitions: srv => new DatabaseDefinitionServicesImpl(srv),
       manipulations: srv => new DatabaseManipulationServicesImpl(srv),
       queries: srv => new DatabaseQueryServicesImpl(srv),
       utils: srv => new DatabaseUtilitiesServicesImpl(srv),
+    },
+    api: {
+      setup: (srv) => new UndoLogSetupPublicImpl(srv),    
+      logFactory: (srv) => (channelId: number) => new UndoLogPublicImpl(srv, channelId),
     }
   };
   return module;
 }
 
 export function createUndoLogServices(connection: Connection, prefix: string) {
-  return inject(module(connection, prefix)) as UndoLogServices &
-    UndoLogConnectionServices;
+  return inject(module(connection, prefix)) as UndoLogServices;
 }
 
 function testModule(
@@ -115,7 +124,7 @@ export function createTestServices(connection: Connection, prefix: string) {
 export type InitializeMultipleOptions = Record<number, string | string[]>;
 export type InitializeMultipleResult = Record<number, UndoLogPublic>;
 
-export interface UndoLogSetupPublic {
+export interface UndoLogPublicSetup {
   initializeSingle(channelId?: number): Promise<UndoLogPublic>;
   initializeMultiple(
     options: InitializeMultipleOptions

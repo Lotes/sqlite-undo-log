@@ -27,14 +27,14 @@ export class UndoLogSetupImpl implements UndoLogSetup {
   private channels: ChannelServices;
   private teardown: TeardownServices;
   constructor(srv: UndoLogServices) {
-    this.config = srv.config;
+    this.config = srv.internals.config;
     this.manipulations = srv.databases.manipulations;
-    this.setup = srv.setup;
-    this.teardown = srv.teardown;
-    this.channels = srv.channels;
-    this.prefix = srv.prefix;
-    this.tables = srv.tables;
-    this.forceForeignKeys = srv.forceForeignKeys
+    this.setup = srv.installations.setup;
+    this.teardown = srv.installations.teardown;
+    this.channels = srv.internals.channels;
+    this.prefix = srv.installations.prefix;
+    this.tables = srv.internals.tables;
+    this.forceForeignKeys = srv.installations.forceForeignKeys
     this.connection = srv.connection;
     this.definitions = srv.databases.definitions;
     this.logger = this.connection.clone();

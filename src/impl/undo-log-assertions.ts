@@ -15,8 +15,8 @@ export class UndoLogAssertionsImpl implements UndoLogAssertions {
   constructor(srv: UndoLogTestServices) {
     this.utils = srv.databases.utils;
     this.assertions = srv.assertions;
-    this.channels = srv.channels;
-    this.actions = srv.actions;
+    this.channels = srv.internals.channels;
+    this.actions = srv.internals.actions;
   }
 
   async assertChannelInStatus(channelId: number, status: ChannelStatus): Promise<Channel> {

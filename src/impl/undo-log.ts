@@ -16,11 +16,11 @@ export class UndoLogImpl implements UndoLog {
   private actions: ActionServices;
   constructor(srv: UndoLogServices) {
     this.connection = srv.connection;
-    this.channels = srv.channels;
-    this.actions = srv.actions;
+    this.channels = srv.internals.channels;
+    this.actions = srv.internals.actions;
     this.utils = srv.databases.utils;
     this.manipulations = srv.databases.manipulations;
-    this.prefix = srv.prefix;
+    this.prefix = srv.installations.prefix;
   }
   async startTracking(
     channelId: number,

@@ -17,8 +17,8 @@ export class ActionServicesImpl implements ActionServices {
 
   constructor(srv: UndoLogServices) {
     this.connection = srv.connection;
-    this.prefix = srv.prefix;
-    this.setup = srv.setup;
+    this.prefix = srv.installations.prefix;
+    this.setup = srv.installations.setup;
   }
 
   async getActionsOfChannel(channel: Channel): Promise<Action[]> {

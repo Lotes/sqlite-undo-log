@@ -12,7 +12,7 @@ export class TeardownServicesImpl implements TeardownServices {
   private prefix: string;
   constructor(srv: UndoLogServices) {
     this.connection = srv.connection;
-    this.prefix = srv.prefix;
+    this.prefix = srv.installations.prefix;
   }
 
   async dropUndoLogTable(tableName: string) {

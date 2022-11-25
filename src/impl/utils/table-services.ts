@@ -7,7 +7,7 @@ export class TableServicesImpl implements TableServices {
   private utils: DatabaseManipulationServices;
 
   constructor(srv: UndoLogServices) {
-    this.prefix = srv.prefix;
+    this.prefix = srv.installations.prefix;
     this.utils = srv.databases.manipulations;
   }
 

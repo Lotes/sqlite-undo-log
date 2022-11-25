@@ -16,7 +16,7 @@ describe("UndoLogUtils", () => {
   let channels: ChannelServices;
 
   beforeEach(async () => {
-    ({ assertions, connection, setup, tables, teardown, channels } = await setupBeforeEach());
+    ({ assertions, connection, installations: {setup, teardown}, internals: {tables, channels} } = await setupBeforeEach());
   });
 
   afterEach(async () => {

@@ -9,7 +9,7 @@ export class ConfigurationServicesImpl implements ConfigurationServices {
   private prefix: string;
   constructor(srv: UndoLogServices) {
     this.connection = srv.connection;
-    this.prefix = srv.prefix;
+    this.prefix = srv.installations.prefix;
   }
 
   async getConfig(name: string): Promise<number> {
