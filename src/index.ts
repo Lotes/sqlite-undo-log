@@ -43,9 +43,9 @@ export interface UndoLogServices extends UndoLogConnectionServices {
   channels: ChannelServices;
   actions: ActionServices;
   databases: {
-    definition: DatabaseDefinitionServices;
-    manipulation: DatabaseManipulationServices;
-    query: DatabaseQueryServices;
+    definitions: DatabaseDefinitionServices;
+    manipulations: DatabaseManipulationServices;
+    queries: DatabaseQueryServices;
     utils: DatabaseUtilitiesServices;
   };
   forceForeignKeys: boolean;
@@ -81,9 +81,9 @@ function module(
     channels: srv => new ChannelServicesImpl(srv),
     actions: srv => new ActionServicesImpl(srv),
     databases: {
-      definition: srv => new DatabaseDefinitionServicesImpl(srv),
-      manipulation: srv => new DatabaseManipulationServicesImpl(srv),
-      query: srv => new DatabaseQueryServicesImpl(srv),
+      definitions: srv => new DatabaseDefinitionServicesImpl(srv),
+      manipulations: srv => new DatabaseManipulationServicesImpl(srv),
+      queries: srv => new DatabaseQueryServicesImpl(srv),
       utils: srv => new DatabaseUtilitiesServicesImpl(srv),
     }
   };

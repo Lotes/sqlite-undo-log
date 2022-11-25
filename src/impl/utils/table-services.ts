@@ -8,7 +8,7 @@ export class TableServicesImpl implements TableServices {
 
   constructor(srv: UndoLogServices) {
     this.prefix = srv.prefix;
-    this.utils = srv.databases.manipulation;
+    this.utils = srv.databases.manipulations;
   }
 
   insertIntoUndoLogTable<T extends Record<string, any>>(

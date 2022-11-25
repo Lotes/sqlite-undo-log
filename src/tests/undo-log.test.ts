@@ -19,7 +19,7 @@ describe("UndoLog", () => {
 
   beforeEach(async () => {
     let rest;
-    ({ logSetup, logAssertions, assertions, log, connection, databases: { definition: definitions, manipulation: manipulations} } = await setupBeforeEach());
+    ({ logSetup, logAssertions, assertions, log, connection, databases: { definitions: definitions, manipulations: manipulations} } = await setupBeforeEach());
     await logSetup.install();
     await logSetup.enableDebugMode(true);
   });

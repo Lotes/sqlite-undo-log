@@ -19,7 +19,7 @@ export class UndoLogImpl implements UndoLog {
     this.channels = srv.channels;
     this.actions = srv.actions;
     this.utils = srv.databases.utils;
-    this.manipulations = srv.databases.manipulation;
+    this.manipulations = srv.databases.manipulations;
     this.prefix = srv.prefix;
   }
   async startTracking(

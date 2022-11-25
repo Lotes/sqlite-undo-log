@@ -13,7 +13,7 @@ export class SetupServicesImpl implements SetupServices {
   constructor(srv: UndoLogServices) {
     this.connection = srv.connection;
     this.prefix = srv.prefix;
-    this.definitions = srv.databases.definition;
+    this.definitions = srv.databases.definitions;
     this.utils =  srv.databases.utils;
   }
 

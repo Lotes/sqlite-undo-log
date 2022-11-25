@@ -21,9 +21,9 @@ describe("utils", () => {
       connection,
       databases: {
         utils,
-        query: queries,
-        manipulation: manipulations,
-        definition: definitions,
+        queries: queries,
+        manipulations: manipulations,
+        definitions: definitions,
       },
     } = await setupBeforeEach());
   });

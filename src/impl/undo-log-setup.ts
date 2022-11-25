@@ -28,7 +28,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
   private teardown: TeardownServices;
   constructor(srv: UndoLogServices) {
     this.config = srv.config;
-    this.manipulations = srv.databases.manipulation;
+    this.manipulations = srv.databases.manipulations;
     this.setup = srv.setup;
     this.teardown = srv.teardown;
     this.channels = srv.channels;
@@ -36,7 +36,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     this.tables = srv.tables;
     this.forceForeignKeys = srv.forceForeignKeys
     this.connection = srv.connection;
-    this.definitions = srv.databases.definition;
+    this.definitions = srv.databases.definitions;
     this.logger = this.connection.clone();
     this.listener = async event => {
       await this.logger.run(`
