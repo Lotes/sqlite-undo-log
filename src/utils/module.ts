@@ -1,6 +1,11 @@
 import { inject, Module } from "djinject";
-import { SetupServicesImpl, TeardownServicesImpl, ConfigurationServicesImpl, TableServicesImpl, ChannelServicesImpl, ActionServicesImpl } from "../impl/undo-log-utils";
-import { UtilsImpl } from "../impl/utils";
+import { ActionServicesImpl } from "../impl/utils/action-services";
+import { ChannelServicesImpl } from "../impl/utils/channel-services";
+import { TableServicesImpl } from "../impl/utils/table-services";
+import { ConfigurationServicesImpl } from "../impl/utils/configuration-services";
+import { TeardownServicesImpl } from "../impl/utils/teardown-services";
+import { SetupServicesImpl } from "../impl/utils/setup-services";
+import { UtilsImpl } from "../impl/utilities";
 import { Connection } from "../sqlite3";
 import { UndoLogUtilityServices } from "./undo-log-utility-services";
 import { PrivateServices } from "./private-services";
