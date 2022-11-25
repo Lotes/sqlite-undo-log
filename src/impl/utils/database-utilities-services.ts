@@ -3,7 +3,7 @@ import { UndoLogServices } from "../..";
 import { UndoLogError } from "../../undo-log";
 import { DatabaseUtilitiesServices } from "../../utils/database-utilities-services";
 import { ColumnValue } from "../../utils/types";
-import { Parameters } from "c:/Users/markh/Documents/GitHub/sqlite-undo-log/src/sqlite3";
+import { Parameters } from "../../sqlite3";
 
 export class DatabaseUtilitiesServicesImpl implements DatabaseUtilitiesServices {
   constructor(_srv: UndoLogServices) {}
