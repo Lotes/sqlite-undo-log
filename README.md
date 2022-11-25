@@ -27,8 +27,9 @@ const connection = await database.connect();
 Then, create and install the undo log services...
 
 ```typescript
-const { api } = createUndoLogServices(connection);
-const log = await api.initializeSingle();
+const api = createUndoLogServices(connection)
+const { setup } = api;
+const log = await setup.initializeSingle();
 ```
 
 Last, but not least: Record your actions and undo them if required.
