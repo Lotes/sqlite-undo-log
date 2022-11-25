@@ -11,8 +11,15 @@ import {
   Configs,
 } from "../undo-log-tables";
 import { UndoLogError } from "../undo-log";
-import { OldOrNew, ColumnValue, NameValueType, Utils } from "../utils";
-import { ActionServices, ChannelServices, ConfigurationServices, PrivateServices, SetupServices, TableServices, TeardownServices, UndoLogUtilityServices } from "../undo-log-utils";
+import { OldOrNew, ColumnValue, NameValueType, Utils } from "../utilities";
+import { ActionServices } from "../utils/action-services";
+import { ChannelServices } from "../utils/channel-services";
+import { ConfigurationServices } from "../utils/configuration-services";
+import { PrivateServices } from "../utils/private-services";
+import { SetupServices } from "../utils/setup-services";
+import { TableServices } from "../utils/table-services";
+import { TeardownServices } from "../utils/teardown-services";
+import { UndoLogUtilityServices } from "../utils/undo-log-utility-services";
 
 export class SetupServicesImpl implements SetupServices {
   private connection: Connection;

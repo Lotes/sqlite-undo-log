@@ -1,7 +1,7 @@
 import { Assertions } from "../assertions";
 import { Connection } from "../sqlite3";
 import { SqliteType } from "../undo-log-tables";
-import { Utils } from "../utils";
+import { Utils } from "../utilities";
 import { setupBeforeEach, TableDefintion_OnlyOneType } from "./fixtures";
 
 describe("utils", () => {

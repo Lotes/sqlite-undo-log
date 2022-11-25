@@ -1,5 +1,5 @@
 import { AssertionError, Assertions } from "../assertions";
-import { Utils } from "../utils";
+import { Utils } from "../utilities";
 
 export class AssertionsImpl implements Assertions {
   private utils: Utils;

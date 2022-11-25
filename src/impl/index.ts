@@ -1,17 +1,11 @@
-import {
-  InitializeMultipleOptions,
-  InitializeMultipleResult,
-  UndoLogConstructorOptions,
-  UndoLogPublic,
-  UndoLogSetupPublic,
-} from "..";
 import { Connection } from "../sqlite3";
 import _ from "lodash";
 import { UndoLogImpl } from "./undo-log";
 import { Delta, UndoLog } from "../undo-log";
 import { UndoLogSetup } from "../undo-log-setup";
-import { UndoLogUtilityServices } from "../undo-log-utils";
-import { Utils } from "../utils";
+import { UndoLogUtilityServices } from "../utils/undo-log-utility-services";
+import { Utils } from "../utilities";
+import { UndoLogSetupPublic, UndoLogPublic, InitializeMultipleOptions, InitializeMultipleResult, UndoLogConstructorOptions } from "..";
 
 export class UndoLogSetupPublicImpl implements UndoLogSetupPublic {
   constructor(private utils: Utils, private setup: UndoLogSetup, private apiLogFactory: (channelId: number) => UndoLogPublic) {}

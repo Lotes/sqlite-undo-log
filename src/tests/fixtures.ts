@@ -2,7 +2,7 @@ import { promises } from "fs";
 import path from "path";
 import { NodeSqlite3DatabaseImpl } from "../impl/sqlite3";
 import { SqliteType, TableDefinition } from "../undo-log-tables";
-import { createTestServices } from "./..";
+import { createTestServices } from "..";
 
 export namespace AllTypeTable {
   export const Definition: TableDefinition = {

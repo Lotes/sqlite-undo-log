@@ -1,8 +1,7 @@
 import { Action, Change, Channel, ChannelStatus } from "../undo-log-tables";
 import { UndoLogAssertions } from "../undo-log-assertions";
-import { OldOrNew, Utils } from "../utils";
-import { AssertionsImpl } from "./assertions";
-import { UndoLogUtilityServices } from "../undo-log-utils";
+import { OldOrNew, Utils } from "../utilities";
+import { UndoLogUtilityServices } from "../utils/undo-log-utility-services";
 import { Assertions } from "../assertions";
 
 export class UndoLogAssertionsImpl implements UndoLogAssertions {

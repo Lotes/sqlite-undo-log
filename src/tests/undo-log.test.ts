@@ -4,7 +4,7 @@ import { tables } from "../undo-log-tables";
 import { UndoLog } from "../undo-log";
 import { UndoLogAssertions } from "../undo-log-assertions";
 import { UndoLogSetup } from "../undo-log-setup";
-import { Utils } from "../utils";
+import { Utils } from "../utilities";
 import { AllTypeTable, setupBeforeEach } from "./fixtures";
 
 describe("UndoLog", () => {

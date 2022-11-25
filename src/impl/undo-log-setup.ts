@@ -1,8 +1,8 @@
 import { Connection, ConnectionListener, WeakConnection } from "../sqlite3";
 import { tables, ChangeType, TableColumn, CleanUpTasks, CleanUpTask, CleanUpTaskType, ConfigNames, Logs, Changes, Configs, Channels, Actions, Tables, Values, Variables } from "../undo-log-tables";
 import { UndoLogSetup } from "../undo-log-setup";
-import { UndoLogUtilityServices } from "../undo-log-utils";
-import { Utils } from "../utils";
+import { Utils } from "../utilities";
+import { UndoLogUtilityServices } from "../utils/undo-log-utility-services";
 
 const CLEANUP_TASK_NAME = CleanUpTasks.name;
 export class UndoLogSetupImpl implements UndoLogSetup {

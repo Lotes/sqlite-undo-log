@@ -2,7 +2,7 @@ import { Channel, Changes, Channels } from "../undo-log-tables";
 import { setupBeforeEach } from "./fixtures";
 import { Connection } from "../sqlite3";
 import { Assertions } from "../assertions";
-import { UndoLogUtilityServices } from "../undo-log-utils";
+import { UndoLogUtilityServices } from "../utils/undo-log-utility-services";
 
 describe("UndoLogUtils", () => {
   let connection: Connection;

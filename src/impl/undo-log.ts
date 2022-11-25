@@ -1,8 +1,8 @@
 import { Action, Category, Change, Channel, Table } from "../undo-log-tables";
 import { Connection } from "../sqlite3";
 import { Delta, UndoLog, UndoLogError, UndoLogStatus } from "../undo-log";
-import { UndoLogUtilityServices } from "../undo-log-utils";
-import { Utils } from "../utils";
+import { UndoLogUtilityServices } from "../utils/undo-log-utility-services";
+import { Utils } from "../utilities";
 
 export class UndoLogImpl implements UndoLog {
   private connection: Connection;
