@@ -6,8 +6,6 @@ import { ColumnValue } from "../../utils/types";
 import { Parameters } from "../../sqlite3";
 
 export class DatabaseUtilitiesServicesImpl implements DatabaseUtilitiesServices {
-  constructor(_srv: UndoLogServices) {}
-  
   normalize(arg: any): any {
     if (typeof arg === "string") {
       if (/^\d+(\.\d+)?$/.test(arg)) {

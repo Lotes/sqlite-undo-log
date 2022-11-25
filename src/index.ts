@@ -86,7 +86,7 @@ function module(
       definitions: srv => new DatabaseDefinitionServicesImpl(srv),
       manipulations: srv => new DatabaseManipulationServicesImpl(srv),
       queries: srv => new DatabaseQueryServicesImpl(srv),
-      utils: srv => new DatabaseUtilitiesServicesImpl(srv),
+      utils: () => new DatabaseUtilitiesServicesImpl(),
     },
     api: {
       setup: (srv) => new UndoLogSetupPublicImpl(srv),    
