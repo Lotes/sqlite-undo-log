@@ -8,12 +8,13 @@ import {
 import { Connection } from "../sqlite3";
 import _ from "lodash";
 import { UndoLogImpl } from "./undo-log";
-import { UndoLogUtils } from "../undo-log-utils";
 import { Delta, UndoLog } from "../undo-log";
 import { UndoLogSetup } from "../undo-log-setup";
+import { UndoLogUtilityServices } from "../undo-log-utils";
+import { Utils } from "../utils";
 
 export class UndoLogSetupPublicImpl implements UndoLogSetupPublic {
-  constructor(private utils: UndoLogUtils, private setup: UndoLogSetup, private apiLogFactory: (channelId: number) => UndoLogPublic) {}
+  constructor(private utils: Utils, private setup: UndoLogSetup, private apiLogFactory: (channelId: number) => UndoLogPublic) {}
   async initializeMultiple(
     options: InitializeMultipleOptions
   ): Promise<InitializeMultipleResult> {
@@ -47,11 +48,12 @@ export class UndoLogPublicImpl implements UndoLogPublic {
   private undoLog: UndoLog;
   constructor(
     connection: Connection,
-    utils: UndoLogUtils,
+    logUtils: UndoLogUtilityServices,
+    utils: Utils,
     { channelId, tablePrefix }: UndoLogConstructorOptions
   ) {
     this.channelId = channelId;
-    this.undoLog = new UndoLogImpl(connection, utils, tablePrefix);
+    this.undoLog = new UndoLogImpl(connection, logUtils, tablePrefix);
   }
   private startTracking(category?: string): Promise<void> {
     return this.undoLog.startTracking(this.channelId, category);

@@ -5,19 +5,16 @@ import { Connection } from "./sqlite3";
 import { Delta, UndoLog } from "./undo-log";
 import { UndoLogAssertions } from "./undo-log-assertions";
 import { UndoLogSetup } from "./undo-log-setup";
-import { UndoLogUtils } from "./undo-log-utils";
-import { Utils } from "./utils";
+import { createUndoLogUtilityServices, UndoLogUtilityServices } from "./undo-log-utils";
 import { AssertionsImpl } from "./impl/assertions";
 import { UndoLogImpl } from "./impl/undo-log";
 import { UndoLogAssertionsImpl } from "./impl/undo-log-assertions";
 import { UndoLogSetupImpl } from "./impl/undo-log-setup";
-import { UndoLogUtilsImpl } from "./impl/undo-log-utils";
-import { UtilsImpl } from "./impl/utils";
 
 export interface UndoLogConnectionServices {
     prefix: string|undefined;
     connection: Connection;
-    logUtils: UndoLogUtils;
+    logUtils: UndoLogUtilityServices;
 }
 
 export interface UndoLogServices {
@@ -28,22 +25,21 @@ export interface UndoLogServices {
 }
 
 export interface UndoLogTestServices {
-    utils: Utils;
     assertions: Assertions;
     logAssertions: UndoLogAssertions;
     log: UndoLog;
     apiLog: UndoLogPublic;
 }
 
-function module(connection: Connection, prefix?: string): Module<UndoLogServices & UndoLogConnectionServices> {
+function module(connection: Connection, prefix?: string): Module<UndoLogServices & UndoLogConnectionServices, UndoLogServices & UndoLogConnectionServices> {
     return {
-        prefix:  () => prefix,
+        prefix: () => prefix,
         connection: () => connection,
-        logUtils: srv => new UndoLogUtilsImpl(srv.connection, srv.prefix),
+        logUtils: srv => createUndoLogUtilityServices(srv.connection, srv.prefix),
         logFactory:  srv => () => new UndoLogImpl(srv.connection, srv.logUtils, srv.prefix),
-        logSetup: srv => new UndoLogSetupImpl(srv.connection, srv.logUtils, srv.prefix),
-        api: srv => new UndoLogSetupPublicImpl(srv.utils, srv.logSetup, srv.apiLogFactory),
-        apiLogFactory: srv => (channelId: number) => new UndoLogPublicImpl(srv.connection, srv.logUtils, {channelId, tablePrefix: srv.prefix})
+        logSetup: srv => new UndoLogSetupImpl(srv.connection, srv.logUtils, true, srv.logUtils.utils, srv.prefix),
+        api: srv => new UndoLogSetupPublicImpl(srv.logUtils.utils, srv.logSetup, srv.apiLogFactory),
+        apiLogFactory: srv => (channelId: number) => new UndoLogPublicImpl(srv.connection, srv.logUtils, srv.utils, {channelId, tablePrefix: srv.prefix})
     };
 }
 
@@ -54,9 +50,8 @@ export function createUndoLogServices(connection: Connection, prefix?: string) {
 function testModule(connection: Connection, prefix: string): Module<UndoLogTestServices & UndoLogConnectionServices & UndoLogServices> {
     return {
         ...module(connection, prefix),
-        utils: srv => new UtilsImpl(srv.connection),
-        assertions:  srv => new AssertionsImpl(srv.utils),
-        logAssertions: srv => new UndoLogAssertionsImpl(srv.logUtils),
+        assertions: srv => new AssertionsImpl(srv.logUtils.utils),
+        logAssertions: srv => new UndoLogAssertionsImpl(srv.logUtils, srv.logUtils.utils, srv.assertions),
         log: srv => srv.logFactory(),
         apiLog: srv => srv.apiLogFactory(0)
     };

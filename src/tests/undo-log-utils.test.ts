@@ -1,13 +1,13 @@
 import { Channel, Changes, Channels } from "../undo-log-tables";
 import { setupBeforeEach } from "./fixtures";
 import { Connection } from "../sqlite3";
-import { UndoLogUtils } from "../undo-log-utils";
 import { Assertions } from "../assertions";
+import { UndoLogUtilityServices } from "../undo-log-utils";
 
 describe("UndoLogUtils", () => {
   let connection: Connection;
   let assertions: Assertions;
-  let logUtils: UndoLogUtils;
+  let logUtils: UndoLogUtilityServices;
 
   beforeEach(async () => {
     ({ assertions, connection, logUtils } = await setupBeforeEach());
@@ -23,7 +23,7 @@ describe("UndoLogUtils", () => {
       const name = "dummy";
 
       // act
-      await logUtils.createUndoLogTable(name, Changes);
+      await logUtils.setup.createUndoLogTable(name, Changes);
 
       // assert
       await assertions.assertTableExists("undo_dummy");
@@ -38,7 +38,7 @@ describe("UndoLogUtils", () => {
       await connection.execute(`CREATE TABLE undo_xxx (id INTEGER)`);
 
       // act
-      await logUtils.dropUndoLogTable("xxx");
+      await logUtils.teardown.dropUndoLogTable("xxx");
 
       // assert
       await assertions.assertTableDoesNotExist("undo_xxx");
@@ -47,14 +47,14 @@ describe("UndoLogUtils", () => {
   describe("createChannel", () => {
     test("channel already exists, wrong state", async () => {
       // arrange
-      await logUtils.createUndoLogTable("channels", Channels);
-      await logUtils.insertIntoUndoLogTable<Channel>("channels", {
+      await logUtils.setup.createUndoLogTable("channels", Channels);
+      await logUtils.tables.insertIntoUndoLogTable<Channel>("channels", {
         id: 12345,
         status: "RECORDING",
       });
 
       // act
-      const action = async () => await logUtils.getOrCreateReadyChannel(12345);
+      const action = async () => await logUtils.channels.getOrCreateReadyChannel(12345);
 
       // assert
       expect(action).rejects.toThrowError();
@@ -62,14 +62,14 @@ describe("UndoLogUtils", () => {
 
     test("channel already exists, correct state", async () => {
       // arrange
-      await logUtils.createUndoLogTable("channels", Channels);
-      await logUtils.insertIntoUndoLogTable<Channel>("channels", {
+      await logUtils.setup.createUndoLogTable("channels", Channels);
+      await logUtils.tables.insertIntoUndoLogTable<Channel>("channels", {
         id: 12345,
         status: "READY",
       });
 
       // act
-      await logUtils.getOrCreateReadyChannel(12345);
+      await logUtils.channels.getOrCreateReadyChannel(12345);
 
       // assert
       await assertions.assertTableHas<Channel>("undo_channels", {
@@ -80,10 +80,10 @@ describe("UndoLogUtils", () => {
 
     test("no channel exists", async () => {
       // arrange
-      await logUtils.createUndoLogTable("channels", Channels);
+      await logUtils.setup.createUndoLogTable("channels", Channels);
 
       // act
-      await logUtils.getOrCreateReadyChannel(12345);
+      await logUtils.channels.getOrCreateReadyChannel(12345);
 
       // assert
       await assertions.assertTableHas("undo_channels", {
@@ -96,14 +96,14 @@ describe("UndoLogUtils", () => {
   describe("updateChannel", () => {
     test("updates existing channel", async () => {
       // arrange
-      await logUtils.createUndoLogTable("channels", Channels);
-      await logUtils.insertIntoUndoLogTable<Channel>("channels", {
+      await logUtils.setup.createUndoLogTable("channels", Channels);
+      await logUtils.tables.insertIntoUndoLogTable<Channel>("channels", {
         id: 999,
         status: "RECORDING",
       });
 
       // act
-      await logUtils.updateChannel(999, "UNDOING");
+      await logUtils.channels.updateChannel(999, "UNDOING");
 
       // assert
       await assertions.assertTableHas<Channel>("undo_channels", {

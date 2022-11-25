@@ -105,14 +105,14 @@ export class UtilsImpl implements Utils {
     const query = `CREATE TABLE ${tableName} (${columns}${foreigns}${uniques});`;
     await this.connection.execute(query);
   }
-  protected createUniqueKeys(definition: TableDefinition) {
+  createUniqueKeys(definition: TableDefinition) {
     return definition.uniques != null
       ? "," +
           definition.uniques.map((x) => `UNIQUE (${x.join(", ")})`).join(", ")
       : "";
   }
 
-  protected createForeignKeys(definition: TableDefinition, prefix: string) {
+  createForeignKeys(definition: TableDefinition, prefix: string) {
     function createOnDelete(f: ForeignKey) {
       switch (f.onDelete) {
         case "CASCADE":
@@ -137,7 +137,7 @@ export class UtilsImpl implements Utils {
       : "";
   }
 
-  protected createColumnDefinitions(definition: TableDefinition) {
+  createColumnDefinitions(definition: TableDefinition) {
     return Object.getOwnPropertyNames(definition.columns).map((n) => {
       const column = definition.columns[n];
       const def = typeof column == "string" ? { type: column } : column;

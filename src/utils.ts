@@ -1,4 +1,5 @@
 import { SqliteType, TableColumn, TableDefinition } from "./undo-log-tables";
+import { Parameters } from "./sqlite3";
 
 export type OldOrNew = "old"|"new";
 
@@ -44,4 +45,8 @@ export interface Utils {
   normalize(arg: any): any;
   equals(left: any, right: any): boolean;
   unquote(values: Record<string, ColumnValue>): Record<string, any>;
+  createUniqueKeys(definition: TableDefinition): string
+  createForeignKeys(definition: TableDefinition, prefix: string): string;
+  createColumnDefinitions(definition: TableDefinition): string[];
+  toParameterList<T extends Record<string, any>>(data: Partial<T>): [Parameters, string[]]
 }
