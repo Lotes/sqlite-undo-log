@@ -17,7 +17,7 @@ describe("utils", () => {
 
   beforeEach(async () => {
     ({
-      assertions,
+      tests: {assertions},
       connection,
       databases: {
         utils,

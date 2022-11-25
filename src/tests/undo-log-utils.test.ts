@@ -16,13 +16,18 @@ describe("UndoLogUtils", () => {
   let channels: ChannelServices;
 
   beforeEach(async () => {
-    ({ assertions, connection, installations: {setup, teardown}, internals: {tables, channels} } = await setupBeforeEach());
+    ({
+      tests: {assertions},
+      connection,
+      installations: { setup, teardown },
+      internals: { tables, channels },
+    } = await setupBeforeEach());
   });
 
   afterEach(async () => {
     await connection.close();
   });
-    
+
   describe("createUndoLogTable", () => {
     test("table gets created", async () => {
       // arrange

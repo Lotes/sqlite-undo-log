@@ -60,10 +60,10 @@ export interface UndoLogServices {
 }
 
 export interface UndoLogTestServices extends UndoLogServices {
-  assertions: Assertions;
-  logAssertions: UndoLogAssertions;
-  log: UndoLog;
-  apiLog: UndoLogPublic;
+  tests: {
+    assertions: Assertions;
+    logAssertions: UndoLogAssertions;
+  }
 }
 
 function module(
@@ -71,9 +71,9 @@ function module(
   prefix: string
 ): Module<UndoLogServices, UndoLogServices> {
   const module: Module<UndoLogServices, UndoLogServices> = {
-    connection,
+    connection: () => connection,
     installations: {
-      prefix,
+      prefix: () => prefix,
       forceForeignKeys: () => true,
       setup: srv => new SetupServicesImpl(srv),
       teardown: srv => new TeardownServicesImpl(srv),
@@ -110,10 +110,10 @@ function testModule(
 ): Module<UndoLogTestServices> {
   return {
     ...module(connection, prefix),
-    assertions: (srv) => new AssertionsImpl(srv),
-    logAssertions: (srv) => new UndoLogAssertionsImpl(srv),
-    log: (srv) => srv.logFactory(),
-    apiLog: (srv) => srv.apiLogFactory(0),
+    tests: {
+      assertions: (srv) => new AssertionsImpl(srv),
+      logAssertions: (srv) => new UndoLogAssertionsImpl(srv),
+    },
   };
 }
 

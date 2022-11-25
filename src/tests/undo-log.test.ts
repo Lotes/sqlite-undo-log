@@ -11,6 +11,7 @@ import { DatabaseManipulationServices } from "../utils/database-manipulation-ser
 describe("UndoLog", () => {
   let connection: Connection;
   let logSetup: UndoLogSetup;
+  let logFactory: () => UndoLog;
   let log: UndoLog;
   let definitions: DatabaseDefinitionServices;
   let manipulations: DatabaseManipulationServices;
@@ -18,7 +19,13 @@ describe("UndoLog", () => {
   let logAssertions: UndoLogAssertions;
 
   beforeEach(async () => {
-    ({ internals:{logSetup}, logAssertions, assertions, log, connection, databases: { definitions: definitions, manipulations: manipulations} } = await setupBeforeEach());
+    ({
+      internals: { logSetup, logFactory },
+      tests: { assertions, logAssertions },
+      connection,
+      databases: { definitions: definitions, manipulations: manipulations },
+    } = await setupBeforeEach());
+    log = logFactory();
     await logSetup.install();
     await logSetup.enableDebugMode(true);
   });
@@ -46,7 +53,10 @@ describe("UndoLog", () => {
       // act
       await log.startTracking(0);
       try {
-        await manipulations.insertIntoTable("all_types", AllTypeTable.Values[0]);
+        await manipulations.insertIntoTable(
+          "all_types",
+          AllTypeTable.Values[0]
+        );
       } finally {
         await log.stopTracking(0);
       }
@@ -74,8 +84,11 @@ describe("UndoLog", () => {
       // act
       await log.startTracking(0);
       try {
-        await manipulations.deleteFromTable("all_types", AllTypeTable.Values[0].id);
-      } finally  {
+        await manipulations.deleteFromTable(
+          "all_types",
+          AllTypeTable.Values[0].id
+        );
+      } finally {
         await log.stopTracking(0);
       }
 
@@ -136,8 +149,11 @@ describe("UndoLog", () => {
       await definitions.createTable("all_types", AllTypeTable.Definition);
       await logSetup.addTable("all_types", 0);
       await log.startTracking(0);
-      try{
-        await manipulations.insertIntoTable("all_types", AllTypeTable.Values[0]);
+      try {
+        await manipulations.insertIntoTable(
+          "all_types",
+          AllTypeTable.Values[0]
+        );
       } finally {
         await log.stopTracking(0);
       }
@@ -157,7 +173,10 @@ describe("UndoLog", () => {
       await logSetup.addTable("all_types", 0);
       await log.startTracking(0);
       try {
-        await manipulations.deleteFromTable("all_types", AllTypeTable.Values[0].id);
+        await manipulations.deleteFromTable(
+          "all_types",
+          AllTypeTable.Values[0].id
+        );
       } finally {
         await log.stopTracking(0);
       }

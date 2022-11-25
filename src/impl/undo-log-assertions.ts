@@ -14,7 +14,7 @@ export class UndoLogAssertionsImpl implements UndoLogAssertions {
   private actions: ActionServices;
   constructor(srv: UndoLogTestServices) {
     this.utils = srv.databases.utils;
-    this.assertions = srv.assertions;
+    this.assertions = srv.tests.assertions;
     this.channels = srv.internals.channels;
     this.actions = srv.internals.actions;
   }

@@ -1,5 +1,4 @@
 import { TableColumn, TableDefinition } from "../undo-log-tables";
-import { Parameters } from "../sqlite3";
 
 export interface DatabaseDefinitionServices {
   createTable(tableName: string, tableDef: TableDefinition): Promise<void>;
