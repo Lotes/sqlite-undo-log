@@ -1,10 +1,15 @@
+import { UndoLogTestServices } from "..";
 import { AssertionError, Assertions } from "../assertions";
-import { Utils } from "../utils";
+import { DatabaseDefinitionServices } from "../utils/database-definition-services";
+import { DatabaseQueryServices } from "../utils/database-query-services";
 
 export class AssertionsImpl implements Assertions {
-  private utils: Utils;
-  constructor(utils: Utils) {
-    this.utils = utils;
+  private utils: DatabaseDefinitionServices;
+  private queries: DatabaseQueryServices;
+
+  constructor(srv: UndoLogTestServices) {
+    this.utils = srv.databases.definitions;
+    this.queries = srv.databases.queries;
   }
 
   async assertColumnExists(
@@ -41,7 +46,7 @@ export class AssertionsImpl implements Assertions {
   }
 
   async assertTableHasId(tableName: string, id: number) {
-    const result = await this.utils.hasTableId(tableName, id);
+    const result = await this.queries.hasTableId(tableName, id);
     this.assertTrue(
       result,
       `Expected table '${tableName}' to have entry with id ${id}, but was not found.`
@@ -49,7 +54,7 @@ export class AssertionsImpl implements Assertions {
   }
 
   async assertTableHasNoId(tableName: string, id: number): Promise<void> {
-    const result = await this.utils.hasTableId(tableName, id);
+    const result = await this.queries.hasTableId(tableName, id);
     this.assertFalse(
       result,
       `Expected table '${tableName}' to NOT have entry with id ${id}, but was found.`
@@ -60,7 +65,7 @@ export class AssertionsImpl implements Assertions {
     tableName: string,
     row: T
   ) {
-    const [result, errors] = await this.utils.tableHas(tableName, row);
+    const [result, errors] = await this.queries.tableHas(tableName, row);
     this.assertTrue(
       result,
       errors.join("\r\n")

@@ -4,72 +4,123 @@ import { Assertions } from "./assertions";
 import { Connection } from "./sqlite3";
 import { Delta, UndoLog } from "./undo-log";
 import { UndoLogAssertions } from "./undo-log-assertions";
-import { UndoLogSetup } from "./undo-log-setup";
-import { UndoLogUtils } from "./undo-log-utils";
-import { Utils } from "./utils";
 import { AssertionsImpl } from "./impl/assertions";
 import { UndoLogImpl } from "./impl/undo-log";
 import { UndoLogAssertionsImpl } from "./impl/undo-log-assertions";
-import { UndoLogSetupImpl } from "./impl/undo-log-setup";
-import { UndoLogUtilsImpl } from "./impl/undo-log-utils";
-import { UtilsImpl } from "./impl/utils";
-
-export interface UndoLogConnectionServices {
-    prefix: string|undefined;
-    connection: Connection;
-    logUtils: UndoLogUtils;
-}
+import { ActionServices } from "./utils/action-services";
+import { ChannelServices } from "./utils/channel-services";
+import { ConfigurationServices } from "./utils/configuration-services";
+import { DatabaseDefinitionServices } from "./utils/database-definition-services";
+import { DatabaseManipulationServices } from "./utils/database-manipulation-services";
+import { DatabaseQueryServices } from "./utils/database-query-services";
+import { DatabaseUtilitiesServices } from "./utils/database-utilities-services";
+import { SetupServices } from "./utils/setup-services";
+import { TableServices } from "./utils/table-services";
+import { TeardownServices } from "./utils/teardown-services";
+import { ActionServicesImpl } from "./impl/utils/action-services";
+import { ChannelServicesImpl } from "./impl/utils/channel-services";
+import { ConfigurationServicesImpl } from "./impl/utils/configuration-services";
+import { DatabaseDefinitionServicesImpl } from "./impl/utils/database-definition-services";
+import { DatabaseManipulationServicesImpl } from "./impl/utils/database-manipulation-services";
+import { DatabaseQueryServicesImpl } from "./impl/utils/database-query-services";
+import { DatabaseUtilitiesServicesImpl } from "./impl/utils/database-utilities-services";
+import { SetupServicesImpl } from "./impl/utils/setup-services";
+import { TableServicesImpl } from "./impl/utils/table-services";
+import { TeardownServicesImpl } from "./impl/utils/teardown-services";
 
 export interface UndoLogServices {
+  connection: Connection;
+  installations: {
+    forceForeignKeys: boolean;
+    prefix: string;
+    setup: SetupServices;
+    teardown: TeardownServices;  
+  }
+  internals: {
+    configs: ConfigurationServices;
+    tables: TableServices;
+    channels: ChannelServices;
+    actions: ActionServices;
     logFactory: () => UndoLog;
-    logSetup: UndoLogSetup;
-    api: UndoLogSetupPublic;
-    apiLogFactory: (channelId: number) => UndoLogPublic;
+  }
+  databases: {
+    definitions: DatabaseDefinitionServices;
+    manipulations: DatabaseManipulationServices;
+    queries: DatabaseQueryServices;
+    utils: DatabaseUtilitiesServices;
+  }
+  api: {
+    setup: UndoLogPublicSetup;
+    logFactory: (channelId: number) => UndoLogPublic;
+  }
+
 }
 
-export interface UndoLogTestServices {
-    utils: Utils;
+export interface UndoLogTestServices extends UndoLogServices {
+  tests: {
     assertions: Assertions;
     logAssertions: UndoLogAssertions;
-    log: UndoLog;
-    apiLog: UndoLogPublic;
+  }
 }
 
-function module(connection: Connection, prefix?: string): Module<UndoLogServices & UndoLogConnectionServices> {
-    return {
-        prefix:  () => prefix,
-        connection: () => connection,
-        logUtils: srv => new UndoLogUtilsImpl(srv.connection, srv.prefix),
-        logFactory:  srv => () => new UndoLogImpl(srv.connection, srv.logUtils, srv.prefix),
-        logSetup: srv => new UndoLogSetupImpl(srv.connection, srv.logUtils, srv.prefix),
-        api: srv => new UndoLogSetupPublicImpl(srv.utils, srv.logSetup, srv.apiLogFactory),
-        apiLogFactory: srv => (channelId: number) => new UndoLogPublicImpl(srv.connection, srv.logUtils, {channelId, tablePrefix: srv.prefix})
-    };
+function module(
+  connection: Connection,
+  prefix: string
+): Module<UndoLogServices, UndoLogServices> {
+  const module: Module<UndoLogServices, UndoLogServices> = {
+    connection: () => connection,
+    installations: {
+      prefix: () => prefix,
+      forceForeignKeys: () => true,
+      setup: srv => new SetupServicesImpl(srv),
+      teardown: srv => new TeardownServicesImpl(srv),
+    },
+    internals: {
+      configs: srv => new ConfigurationServicesImpl(srv),
+      tables: srv => new TableServicesImpl(srv),
+      channels: srv => new ChannelServicesImpl(srv),
+      actions: srv => new ActionServicesImpl(srv),
+      logFactory: (srv) => () => new UndoLogImpl(srv),
+    },
+    databases: {
+      definitions: srv => new DatabaseDefinitionServicesImpl(srv),
+      manipulations: srv => new DatabaseManipulationServicesImpl(srv),
+      queries: srv => new DatabaseQueryServicesImpl(srv),
+      utils: () => new DatabaseUtilitiesServicesImpl(),
+    },
+    api: {
+      setup: (srv) => new UndoLogSetupPublicImpl(srv),    
+      logFactory: (srv) => (channelId: number) => new UndoLogPublicImpl(srv, channelId),
+    }
+  };
+  return module;
 }
 
-export function createUndoLogServices(connection: Connection, prefix?: string) {
-    return inject(module(connection, prefix)) as UndoLogServices & UndoLogConnectionServices;
+export function createUndoLogServices(connection: Connection, prefix: string) {
+  return inject(module(connection, prefix)) as UndoLogServices;
 }
 
-function testModule(connection: Connection, prefix: string): Module<UndoLogTestServices & UndoLogConnectionServices & UndoLogServices> {
-    return {
-        ...module(connection, prefix),
-        utils: srv => new UtilsImpl(srv.connection),
-        assertions:  srv => new AssertionsImpl(srv.utils),
-        logAssertions: srv => new UndoLogAssertionsImpl(srv.logUtils),
-        log: srv => srv.logFactory(),
-        apiLog: srv => srv.apiLogFactory(0)
-    };
+function testModule(
+  connection: Connection,
+  prefix: string
+): Module<UndoLogTestServices> {
+  return {
+    ...module(connection, prefix),
+    tests: {
+      assertions: (srv) => new AssertionsImpl(srv),
+      logAssertions: (srv) => new UndoLogAssertionsImpl(srv),
+    },
+  };
 }
 
 export function createTestServices(connection: Connection, prefix: string) {
-    return inject(testModule(connection, prefix)) as UndoLogTestServices & UndoLogConnectionServices & UndoLogServices;
+  return inject(testModule(connection, prefix)) as UndoLogTestServices;
 }
 
 export type InitializeMultipleOptions = Record<number, string | string[]>;
 export type InitializeMultipleResult = Record<number, UndoLogPublic>;
 
-export interface UndoLogSetupPublic {
+export interface UndoLogPublicSetup {
   initializeSingle(channelId?: number): Promise<UndoLogPublic>;
   initializeMultiple(
     options: InitializeMultipleOptions

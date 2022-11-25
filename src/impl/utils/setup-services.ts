@@ -1,23 +1,43 @@
-import { Connection, ConnectionListener, WeakConnection } from "../sqlite3";
-import { tables, ChangeType, TableColumn, CleanUpTasks, CleanUpTask, CleanUpTaskType, ConfigNames, Logs, Changes, Configs, Channels, Actions, Tables, Values, Variables } from "../undo-log-tables";
-import { UndoLogSetup } from "../undo-log-setup";
-import { UndoLogUtils } from "../undo-log-utils";
+import { Connection, ConnectionListener, WeakConnection } from "../../sqlite3";
+import { tables, ChangeType, TableColumn, CleanUpTasks, CleanUpTask, CleanUpTaskType, ConfigNames, Logs, Changes, Configs, Channels, Actions, Tables, Values, Variables, TableDefinition } from "../../undo-log-tables";
+import { DatabaseDefinitionServices } from "../../utils/database-definition-services";
+import { UndoLogServices } from "../..";
+import { TeardownServices } from "../../utils/teardown-services";
+import { ChannelServices } from "../../utils/channel-services";
+import { ConfigurationServices } from "../../utils/configuration-services";
+import { TableServices } from "../../utils/table-services";
+import { SetupServices } from "../../utils/setup-services";
+import { DatabaseUtilitiesServices } from "../../utils/database-utilities-services";
 
 const CLEANUP_TASK_NAME = CleanUpTasks.name;
-export class UndoLogSetupImpl implements UndoLogSetup {
+
+export class SetupServicesImpl implements SetupServices {
+  private connection: Connection;
+  private forceForeignKeys: boolean;
+  private definitions: DatabaseDefinitionServices;
+  private utils: DatabaseUtilitiesServices;
+  private prefix: string;
   private logger: WeakConnection;
   private listener: ConnectionListener;
   private debug: boolean = false;
-  constructor(
-    private connection: Connection,
-    private utils: UndoLogUtils,
-    private forceForeignKeys: boolean = true,
-    private prefix: string = "undo_"
-  ) {
-    this.logger = connection.clone();
+  private config: ConfigurationServices;
+  private tables: TableServices;
+  private channels: ChannelServices;
+  private teardown: TeardownServices;
+  constructor(srv: UndoLogServices) {
+    this.config = srv.internals.configs;
+    this.teardown = srv.installations.teardown;
+    this.channels = srv.internals.channels;
+    this.prefix = srv.installations.prefix;
+    this.tables = srv.internals.tables;
+    this.utils = srv.databases.utils;
+    this.forceForeignKeys = srv.installations.forceForeignKeys
+    this.connection = srv.connection;
+    this.definitions = srv.databases.definitions;
+    this.logger = this.connection.clone();
     this.listener = async event => {
       await this.logger.run(`
-        INSERT INTO ${prefix}${Logs.name} (timestamp, query, parameters, location)
+        INSERT INTO ${this.prefix}${Logs.name} (timestamp, query, parameters, location)
         VALUES (${this.scriptTimestamp()}, $query, $parameters, $location)`,
         {
           $query: event.query,
@@ -31,7 +51,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     return "strftime('%Y-%m-%d %H-%M-%f','now')";
   }
   async enableDebugMode(enabled: boolean): Promise<void> {
-    await this.utils.setConfig(ConfigNames.DEBUG, enabled?1:0);
+    await this.config.setConfig(ConfigNames.DEBUG, enabled?1:0);
     await this.syncDebugMode();
   }
   async install(): Promise<string[]> {
@@ -40,8 +60,8 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     }
     if (!await this.isAlreadyInstalled()) {
       for (const table of tables) {
-        await this.utils.createUndoLogTable(table.name, table);
-        await this.utils.insertBlindlyIntoUndoLogTable<CleanUpTask, 'id'>(CLEANUP_TASK_NAME, {
+        await this.createUndoLogTable(table.name, table);
+        await this.tables.insertBlindlyIntoUndoLogTable<CleanUpTask, 'id'>(CLEANUP_TASK_NAME, {
           type: CLEANUP_TASK_NAME === table.name ? "ROOT" : "TABLE",
           name: `${this.prefix}${table.name}`,
           ref_table_name: null,
@@ -52,7 +72,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     return tables.map(t => `${this.prefix}${t.name}`);
   }
   async syncDebugMode() {
-    this.debug = (await this.utils.getConfig(ConfigNames.DEBUG)) === 1;
+    this.debug = (await this.config.getConfig(ConfigNames.DEBUG)) === 1;
     if(this.debug) {
       this.connection.addConnectionListener(this.listener);
     } else {
@@ -62,13 +82,13 @@ export class UndoLogSetupImpl implements UndoLogSetup {
   private async isAlreadyInstalled(): Promise<boolean> {
     let alreadyInstalled = true;
     for (const table of tables) {
-      alreadyInstalled &&= await this.utils.doesTableExist(table.name);
+      alreadyInstalled &&= await this.definitions.doesTableExist(table.name);
     }
     return alreadyInstalled;
   }
   private async cleanUp(type: CleanUpTaskType) {
-    const tasks = await this.utils.getCleanUpTasksByType('TRIGGER');
-    await this.utils.cleanUpAll(tasks);
+    const tasks = await this.teardown.getCleanUpTasksByType('TRIGGER');
+    await this.teardown.cleanUpAll(tasks);
   }
   async uninstall(): Promise<void> {
     await this.cleanUp('TRIGGER');
@@ -76,15 +96,15 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     await this.cleanUp('ROOT');
   }
   async addTable(name: string, channelId: number): Promise<void> {
-    await this.utils.getOrCreateReadyChannel(channelId);
-    const tableId = await this.createUndoLogTable(name, channelId);
+    await this.channels.getOrCreateReadyChannel(channelId);
+    const tableId = await this.createChannel(name, channelId);
     const columns = await this.createUndoLogColumns(tableId, name);
     await this.createTrigger("INSERT", name, columns);
     await this.createTrigger("UPDATE", name, columns);
     await this.createTrigger("DELETE", name, columns);
   }
   private async createUndoLogColumns(tableId: number, tableName: string) {
-    const columns = await this.utils.getMetaTable(tableName);
+    const columns = await this.definitions.getMetaTable(tableName);
     const keyTable = "$table";
     let parameters: Record<string, string | number> = { [keyTable]: tableId };
     let dataStrings: string[] = [];
@@ -106,7 +126,8 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     await this.connection.run(query, parameters);
     return columns;
   }
-  private async createUndoLogTable(name: string, channel: number) {
+
+  private async createChannel(name: string, channel: number) {
     const query = `INSERT INTO ${this.prefix}tables (name, channel_id) VALUES ($name, $channel)`;
     const parameters = {
       $name: name,
@@ -227,7 +248,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     const variableName = triggerName + '_last_change_id_';
     const variableNameExpression = this.connection.escapeString(variableName)+" || "+(type === "DELETE" ? 'OLD' : 'NEW')+'.rowid';
     const getVariableQuery = this.scriptGetVariableQuery(variableNameExpression);
-    await this.utils.insertBlindlyIntoUndoLogTable<CleanUpTask, 'id'>(CLEANUP_TASK_NAME, {
+    await this.tables.insertBlindlyIntoUndoLogTable<CleanUpTask, 'id'>(CLEANUP_TASK_NAME, {
       type: "TRIGGER",
       name: triggerName,
       ref_table_name: tableName,
@@ -267,8 +288,8 @@ export class UndoLogSetupImpl implements UndoLogSetup {
   }
 
   async removeTable(nameQuery: string): Promise<void> {
-    const tasks = await this.utils.getCleanUpTasksRelatedTo(nameQuery);
-    await this.utils.cleanUpAll(tasks);
+    const tasks = await this.teardown.getCleanUpTasksRelatedTo(nameQuery);
+    await this.teardown.cleanUpAll(tasks);
     await this.connection.run(`
       DELETE FROM ${this.prefix}tables
       WHERE name=${nameQuery}
@@ -277,5 +298,24 @@ export class UndoLogSetupImpl implements UndoLogSetup {
         $name: nameQuery,
       }
     );
+  }
+
+  async updateUndoLogTable<T extends Record<string, any> & { id: number; }>(
+    tableName: string,
+    data: Partial<T> & { id: number; }
+  ): Promise<void> {
+    const [parameters, tail] = this.utils.toParameterList(data);
+    const query = `UPDATE ${this.prefix}${tableName} SET ${tail.join(
+      ", "
+    )} WHERE id=$id`;
+    await this.connection.run(query, parameters);
+  }
+
+  async createUndoLogTable(tableName: string, definition: TableDefinition) {
+    const columns = this.definitions.createColumnDefinitions(definition);
+    const foreigns = this.definitions.createForeignKeys(definition, this.prefix);
+    const uniques = this.definitions.createUniqueKeys(definition);
+    const query = `CREATE TABLE ${this.prefix}${tableName} (${columns}${foreigns}${uniques});`;
+    await this.connection.execute(query);
   }
 }
