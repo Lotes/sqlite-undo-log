@@ -4,11 +4,9 @@ import { Assertions } from "./assertions";
 import { Connection } from "./sqlite3";
 import { Delta, UndoLog } from "./undo-log";
 import { UndoLogAssertions } from "./undo-log-assertions";
-import { UndoLogSetup } from "./undo-log-setup";
 import { AssertionsImpl } from "./impl/assertions";
 import { UndoLogImpl } from "./impl/undo-log";
 import { UndoLogAssertionsImpl } from "./impl/undo-log-assertions";
-import { UndoLogSetupImpl } from "./impl/undo-log-setup";
 import { ActionServices } from "./utils/action-services";
 import { ChannelServices } from "./utils/channel-services";
 import { ConfigurationServices } from "./utils/configuration-services";
@@ -39,12 +37,11 @@ export interface UndoLogServices {
     teardown: TeardownServices;  
   }
   internals: {
-    config: ConfigurationServices;
+    configs: ConfigurationServices;
     tables: TableServices;
     channels: ChannelServices;
     actions: ActionServices;
     logFactory: () => UndoLog;
-    logSetup: UndoLogSetup;
   }
   databases: {
     definitions: DatabaseDefinitionServices;
@@ -79,12 +76,11 @@ function module(
       teardown: srv => new TeardownServicesImpl(srv),
     },
     internals: {
-      config: srv => new ConfigurationServicesImpl(srv),
+      configs: srv => new ConfigurationServicesImpl(srv),
       tables: srv => new TableServicesImpl(srv),
       channels: srv => new ChannelServicesImpl(srv),
       actions: srv => new ActionServicesImpl(srv),
       logFactory: (srv) => () => new UndoLogImpl(srv),
-      logSetup: (srv) => new UndoLogSetupImpl(srv),
     },
     databases: {
       definitions: srv => new DatabaseDefinitionServicesImpl(srv),

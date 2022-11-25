@@ -1,18 +1,18 @@
 import _ from "lodash";
 import { UndoLogImpl } from "./undo-log";
 import { Delta, UndoLog } from "../undo-log";
-import { UndoLogSetup } from "../undo-log-setup";
 import { UndoLogPublicSetup, UndoLogPublic, InitializeMultipleOptions, InitializeMultipleResult, UndoLogServices } from "..";
 import { DatabaseDefinitionServices } from "../utils/database-definition-services";
+import { SetupServices } from "../utils/setup-services";
 
 export class UndoLogSetupPublicImpl implements UndoLogPublicSetup {
   private definitions: DatabaseDefinitionServices;
-  private setup: UndoLogSetup;
+  private setup: SetupServices;
   private apiLogFactory: (channelId: number) => UndoLogPublic;
   constructor(srv: UndoLogServices) {
     this.definitions = srv.databases.definitions;
     this.apiLogFactory = srv.api.logFactory;
-    this.setup = srv.internals.logSetup;
+    this.setup = srv.installations.setup;
   }
   async initializeMultiple(
     options: InitializeMultipleOptions

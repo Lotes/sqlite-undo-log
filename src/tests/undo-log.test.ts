@@ -3,14 +3,14 @@ import { Connection } from "../sqlite3";
 import { tables } from "../undo-log-tables";
 import { UndoLog } from "../undo-log";
 import { UndoLogAssertions } from "../undo-log-assertions";
-import { UndoLogSetup } from "../undo-log-setup";
+import { SetupServices } from "../utils/setup-services";
 import { AllTypeTable, setupBeforeEach } from "./fixtures";
 import { DatabaseDefinitionServices } from "../utils/database-definition-services";
 import { DatabaseManipulationServices } from "../utils/database-manipulation-services";
 
 describe("UndoLog", () => {
   let connection: Connection;
-  let logSetup: UndoLogSetup;
+  let setup: SetupServices;
   let logFactory: () => UndoLog;
   let log: UndoLog;
   let definitions: DatabaseDefinitionServices;
@@ -20,14 +20,15 @@ describe("UndoLog", () => {
 
   beforeEach(async () => {
     ({
-      internals: { logSetup, logFactory },
+      installations:{setup},
+      internals: { logFactory },
       tests: { assertions, logAssertions },
       connection,
       databases: { definitions: definitions, manipulations: manipulations },
     } = await setupBeforeEach());
     log = logFactory();
-    await logSetup.install();
-    await logSetup.enableDebugMode(true);
+    await setup.install();
+    await setup.enableDebugMode(true);
   });
 
   afterEach(async () => {
@@ -48,7 +49,7 @@ describe("UndoLog", () => {
     test("insertion works", async () => {
       // arrange
       await definitions.createTable("all_types", AllTypeTable.Definition);
-      await logSetup.addTable("all_types", 0);
+      await setup.addTable("all_types", 0);
 
       // act
       await log.startTracking(0);
@@ -79,7 +80,7 @@ describe("UndoLog", () => {
       // arrange
       await definitions.createTable("all_types", AllTypeTable.Definition);
       await manipulations.insertIntoTable("all_types", AllTypeTable.Values[0]);
-      await logSetup.addTable("all_types", 0);
+      await setup.addTable("all_types", 0);
 
       // act
       await log.startTracking(0);
@@ -110,7 +111,7 @@ describe("UndoLog", () => {
       // arrange
       await definitions.createTable("all_types", AllTypeTable.Definition);
       await manipulations.insertIntoTable("all_types", AllTypeTable.Values[0]);
-      await logSetup.addTable("all_types", 0);
+      await setup.addTable("all_types", 0);
 
       // act
       await log.startTracking(0);
@@ -147,7 +148,7 @@ describe("UndoLog", () => {
     test("insertion works", async () => {
       // arrange
       await definitions.createTable("all_types", AllTypeTable.Definition);
-      await logSetup.addTable("all_types", 0);
+      await setup.addTable("all_types", 0);
       await log.startTracking(0);
       try {
         await manipulations.insertIntoTable(
@@ -170,7 +171,7 @@ describe("UndoLog", () => {
       // arrange
       await definitions.createTable("all_types", AllTypeTable.Definition);
       await manipulations.insertIntoTable("all_types", AllTypeTable.Values[0]);
-      await logSetup.addTable("all_types", 0);
+      await setup.addTable("all_types", 0);
       await log.startTracking(0);
       try {
         await manipulations.deleteFromTable(
@@ -192,7 +193,7 @@ describe("UndoLog", () => {
       // arrange
       await definitions.createTable("all_types", AllTypeTable.Definition);
       await manipulations.insertIntoTable("all_types", AllTypeTable.Values[0]);
-      await logSetup.addTable("all_types", 0);
+      await setup.addTable("all_types", 0);
       await log.startTracking(0);
       try {
         await manipulations.updateTable<AllTypeTable.Row>(

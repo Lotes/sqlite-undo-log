@@ -1,25 +1,23 @@
 import { Connection } from "../../sqlite3";
-import { ChannelStatus, Channel } from "../../undo-log-tables";
+import { ChannelStatus, Channel, Channels } from "../../undo-log-tables";
 import { UndoLogError } from "../../undo-log";
 import { ChannelServices } from "../../utils/channel-services";
-import { SetupServices } from "../../utils/setup-services";
 import { UndoLogServices } from "../..";
-
+import { DatabaseManipulationServices } from "../../utils/database-manipulation-services";
 
 export class ChannelServicesImpl implements ChannelServices {
   private connection: Connection;
   private prefix: string;
-  private setup: SetupServices;
+  private manipulations: DatabaseManipulationServices;
   constructor(srv: UndoLogServices) {
     this.connection = srv.connection;
     this.prefix = srv.installations.prefix;
-    this.setup = srv.installations.setup;
+    this.manipulations = srv.databases.manipulations;
   }
 
   async updateChannel(channelId: number, status: ChannelStatus) {
-    await this.setup.updateUndoLogTable<Channel>("channels", {
-      id: channelId,
-      status,
+    await this.manipulations.updateTable<Channel>(`${this.prefix}${Channels.name}`, channelId, {
+      status
     });
   }
 
