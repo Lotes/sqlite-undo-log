@@ -1,18 +1,16 @@
+import { UndoLogServices } from "../..";
 import { Connection } from "../../sqlite3";
 import { TableDefinition } from "../../undo-log-tables";
 import { DatabaseDefinitionServices } from "../../utils/database-definition-services";
 import { DatabaseUtilitiesServices } from "../../utils/database-utilities-services";
-import { PrivateServices } from "../../utils/private-services";
 import { SetupServices } from "../../utils/setup-services";
-import { UndoLogUtilityServices } from "../../utils/undo-log-utility-services";
-
 
 export class SetupServicesImpl implements SetupServices {
   private connection: Connection;
   private prefix: string;
   private definitions: DatabaseDefinitionServices;
   private utils: DatabaseUtilitiesServices;
-  constructor(srv: UndoLogUtilityServices & PrivateServices) {
+  constructor(srv: UndoLogServices) {
     this.connection = srv.connection;
     this.prefix = srv.prefix;
     this.definitions = srv.databases.definition;

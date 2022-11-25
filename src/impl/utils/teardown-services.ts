@@ -1,18 +1,16 @@
+import { UndoLogServices } from "../..";
 import { Connection } from "../../sqlite3";
 import {
   CleanUpTask,
   CleanUpTasks,
   CleanUpTaskType
 } from "../../undo-log-tables";
-import { PrivateServices } from "../../utils/private-services";
 import { TeardownServices } from "../../utils/teardown-services";
-import { UndoLogUtilityServices } from "../../utils/undo-log-utility-services";
-
 
 export class TeardownServicesImpl implements TeardownServices {
   private connection: Connection;
   private prefix: string;
-  constructor(srv: UndoLogUtilityServices & PrivateServices) {
+  constructor(srv: UndoLogServices) {
     this.connection = srv.connection;
     this.prefix = srv.prefix;
   }

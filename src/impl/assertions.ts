@@ -8,8 +8,8 @@ export class AssertionsImpl implements Assertions {
   private queries: DatabaseQueryServices;
 
   constructor(srv: UndoLogTestServices) {
-    this.utils = srv.logUtils.databases.definition;
-    this.queries = srv.logUtils.databases.query;
+    this.utils = srv.databases.definition;
+    this.queries = srv.databases.query;
   }
 
   async assertColumnExists(

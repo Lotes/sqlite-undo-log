@@ -1,46 +1,49 @@
 import { Action, Category, Change, Channel, Table } from "../undo-log-tables";
 import { Connection } from "../sqlite3";
 import { Delta, UndoLog, UndoLogError, UndoLogStatus } from "../undo-log";
-import { UndoLogUtilityServices } from "../utils/undo-log-utility-services";
 import { DatabaseUtilitiesServices } from "../utils/database-utilities-services";
 import { DatabaseManipulationServices } from "../utils/database-manipulation-services";
 import { UndoLogServices } from "..";
+import { ChannelServices } from "../utils/channel-services";
+import { ActionServices } from "../utils/action-services";
 
 export class UndoLogImpl implements UndoLog {
   private connection: Connection;
-  private logUtils: UndoLogUtilityServices;
   private utils: DatabaseUtilitiesServices;
   private manipulations: DatabaseManipulationServices;
   private prefix: string;
+  private channels: ChannelServices;
+  private actions: ActionServices;
   constructor(srv: UndoLogServices) {
     this.connection = srv.connection;
-    this.logUtils = srv.logUtils;
-    this.utils = srv.logUtils.databases.utils;
-    this.manipulations = srv.logUtils.databases.manipulation;
+    this.channels = srv.channels;
+    this.actions = srv.actions;
+    this.utils = srv.databases.utils;
+    this.manipulations = srv.databases.manipulation;
     this.prefix = srv.prefix;
   }
   async startTracking(
     channelId: number,
     categoryName?: string | undefined
   ): Promise<void> {
-    await this.logUtils.channels.getOrCreateReadyChannel(channelId);
+    await this.channels.getOrCreateReadyChannel(channelId);
     const categoryId = await this.getOrCreateCategory(categoryName);
     await this.createNewAction(channelId, categoryId);
-    await this.logUtils.channels.updateChannel(channelId, "RECORDING");
+    await this.channels.updateChannel(channelId, "RECORDING");
   }
   async stopTracking(channelId: number): Promise<void> {
-    await this.logUtils.channels.updateChannel(channelId, "READY");
+    await this.channels.updateChannel(channelId, "READY");
   }
   private async doItWhileChannelHasStatus<T>(
     channelId: number,
     status: Channel["status"],
     action: () => Promise<T>
   ) {
-    await this.logUtils.channels.updateChannel(channelId, status);
+    await this.channels.updateChannel(channelId, status);
     try {
       return await action();
     } finally {
-      await this.logUtils.channels.updateChannel(channelId, "READY");
+      await this.channels.updateChannel(channelId, "READY");
     }
   }
   private async createNewAction(channelId: number, categoryId: number | null) {
@@ -79,7 +82,7 @@ export class UndoLogImpl implements UndoLog {
     return null;
   }
   async status(channelId: number): Promise<UndoLogStatus> {
-    const channel = await this.logUtils.channels.getChannel(channelId);
+    const channel = await this.channels.getChannel(channelId);
     if(!channel) {
       throw new UndoLogError(`No channel ${channelId} found.`);
     }
@@ -112,7 +115,7 @@ export class UndoLogImpl implements UndoLog {
     }
   }
   async undo(channelId: number): Promise<Delta[]> {
-    await this.logUtils.channels.getOrCreateReadyChannel(channelId);
+    await this.channels.getOrCreateReadyChannel(channelId);
     const query = `
       SELECT a.*
       FROM ${this.prefix}channels ch
@@ -134,7 +137,7 @@ export class UndoLogImpl implements UndoLog {
     );
   }
   async redo(channelId: number): Promise<Delta[]> {
-    await this.logUtils.channels.getOrCreateReadyChannel(channelId);
+    await this.channels.getOrCreateReadyChannel(channelId);
     const query = `
       SELECT a.*
       FROM ${this.prefix}channels ch
@@ -164,7 +167,7 @@ export class UndoLogImpl implements UndoLog {
       const delta = await this.undoChange(change);
       result.push(delta);
     }
-    await this.logUtils.actions.markActionAsUndone(action.id, true);
+    await this.actions.markActionAsUndone(action.id, true);
     return result;
   }
   private async redoAction(action: Action): Promise<Delta[]> {
@@ -176,7 +179,7 @@ export class UndoLogImpl implements UndoLog {
       const delta = await this.redoChange(change);
       result.push(delta);
     }
-    await this.logUtils.actions.markActionAsUndone(action.id, false);
+    await this.actions.markActionAsUndone(action.id, false);
     return result;
   }
   private async undoChange(change: Change): Promise<Delta> {
@@ -228,7 +231,7 @@ export class UndoLogImpl implements UndoLog {
     } as Delta;
   }
   private async undoDeletion(table: Table, change: Change): Promise<Delta> {
-    const values = await this.logUtils.actions.getValuesOfChange(change, "old");
+    const values = await this.actions.getValuesOfChange(change, "old");
     const unquotedValues = this.utils.unquote(values);
     await this.manipulations.insertIntoTable(table.name, unquotedValues);
     return {
@@ -239,7 +242,7 @@ export class UndoLogImpl implements UndoLog {
     } as Delta;
   }
   private async undoUpdate(table: Table, change: Change): Promise<Delta> {
-    const values = await this.logUtils.actions.getValuesOfChange(change, "old");
+    const values = await this.actions.getValuesOfChange(change, "old");
     const unquotedValues = this.utils.unquote(values);
     await this.manipulations.updateTable(table.name, change.new_row_id, unquotedValues);
     return {
@@ -251,7 +254,7 @@ export class UndoLogImpl implements UndoLog {
   }
 
   private async redoInsertion(table: Table, change: Change): Promise<Delta> {
-    const values = await this.logUtils.actions.getValuesOfChange(change, "new");
+    const values = await this.actions.getValuesOfChange(change, "new");
     const unquotedValues = this.utils.unquote(values);
     await this.manipulations.insertIntoTable(table.name, unquotedValues);
     return {
@@ -278,7 +281,7 @@ export class UndoLogImpl implements UndoLog {
     } as Delta;
   }
   private async redoUpdate(table: Table, change: Change): Promise<Delta> {
-    const values = await this.logUtils.actions.getValuesOfChange(change, "new");
+    const values = await this.actions.getValuesOfChange(change, "new");
     const unquotedValues = this.utils.unquote(values);
     await this.manipulations.updateTable(table.name, change.old_row_id, unquotedValues);
     return {

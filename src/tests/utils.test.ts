@@ -5,7 +5,6 @@ import { DatabaseDefinitionServices } from "../utils/database-definition-service
 import { DatabaseManipulationServices } from "../utils/database-manipulation-services";
 import { DatabaseQueryServices } from "../utils/database-query-services";
 import { DatabaseUtilitiesServices } from "../utils/database-utilities-services";
-import { UndoLogUtilityServices } from "../utils/undo-log-utility-services";
 import { setupBeforeEach, TableDefintion_OnlyOneType } from "./fixtures";
 
 describe("utils", () => {
@@ -17,9 +16,16 @@ describe("utils", () => {
   let utils: DatabaseUtilitiesServices;
 
   beforeEach(async () => {
-    let logUtils: UndoLogUtilityServices;
-    ({ assertions, connection, logUtils } = await setupBeforeEach());
-    ({utils, query: queries, manipulation: manipulations, definition: definitions}  = logUtils.databases);
+    ({
+      assertions,
+      connection,
+      databases: {
+        utils,
+        query: queries,
+        manipulation: manipulations,
+        definition: definitions,
+      },
+    } = await setupBeforeEach());
   });
 
   afterEach(async () => {
@@ -73,7 +79,10 @@ describe("utils", () => {
         // arrange
         const def = TableDefintion_OnlyOneType(type);
         await definitions.createTable(def.name, def);
-        await manipulations.insertIntoTable(def.name, { id: 123, col: initialValue });
+        await manipulations.insertIntoTable(def.name, {
+          id: 123,
+          col: initialValue,
+        });
 
         // act
         await manipulations.updateTable(def.name, 123, { col: expected });
@@ -170,20 +179,32 @@ describe("utils", () => {
       ["INTEGER", 456],
       ["REAL", 7.891],
       ["BLOB", Buffer.from("dumdidum")],
-    ])("table with a %s column only", async (type: SqliteType, expected: any) => {
-      // arrange
-      const def = TableDefintion_OnlyOneType(type);
-      await definitions.createTable(def.name, def);
-      await manipulations.insertIntoTable(def.name, { id: 123, col: expected });
+    ])(
+      "table with a %s column only",
+      async (type: SqliteType, expected: any) => {
+        // arrange
+        const def = TableDefintion_OnlyOneType(type);
+        await definitions.createTable(def.name, def);
+        await manipulations.insertIntoTable(def.name, {
+          id: 123,
+          col: expected,
+        });
 
-      // act + assert
-      const initial = await queries.tableHas(def.name, {id: 123, col: expected});
-      expect(initial[0]).toBeTruthy();
-      expect(initial[1].length).toBe(0);
-      const actual = await queries.tableHas(def.name, {id: 124, col: expected});
-      expect(actual[0]).toBeFalsy();
-      expect(actual[1].length).toBe(1);
-    });
+        // act + assert
+        const initial = await queries.tableHas(def.name, {
+          id: 123,
+          col: expected,
+        });
+        expect(initial[0]).toBeTruthy();
+        expect(initial[1].length).toBe(0);
+        const actual = await queries.tableHas(def.name, {
+          id: 124,
+          col: expected,
+        });
+        expect(actual[0]).toBeFalsy();
+        expect(actual[1].length).toBe(1);
+      }
+    );
   });
   describe("deleteFromTable", () => {
     test.each<[SqliteType, any]>([
@@ -206,14 +227,14 @@ describe("utils", () => {
 
       // assert
       await assertions.assertTableHasNoId(def.name, 123);
-    });    
+    });
   });
   describe("normalize", () => {
     test.each<[any, any]>([
       ["hallo", "hallo"],
       [123, 123],
-      ['123', 123],
-      ["X'1234'", Buffer.from('1234', 'hex')],
+      ["123", 123],
+      ["X'1234'", Buffer.from("1234", "hex")],
     ])("a value '%s' gets normalized", (from: any, expected: any) => {
       // arrange + act
       const actual = utils.normalize(from);

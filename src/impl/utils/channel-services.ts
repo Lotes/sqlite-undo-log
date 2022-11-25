@@ -2,16 +2,15 @@ import { Connection } from "../../sqlite3";
 import { ChannelStatus, Channel } from "../../undo-log-tables";
 import { UndoLogError } from "../../undo-log";
 import { ChannelServices } from "../../utils/channel-services";
-import { PrivateServices } from "../../utils/private-services";
 import { SetupServices } from "../../utils/setup-services";
-import { UndoLogUtilityServices } from "../../utils/undo-log-utility-services";
+import { UndoLogServices } from "../..";
 
 
 export class ChannelServicesImpl implements ChannelServices {
   private connection: Connection;
   private prefix: string;
   private setup: SetupServices;
-  constructor(srv: UndoLogUtilityServices & PrivateServices) {
+  constructor(srv: UndoLogServices) {
     this.connection = srv.connection;
     this.prefix = srv.prefix;
     this.setup = srv.setup;

@@ -1,13 +1,12 @@
+import { UndoLogServices } from "../..";
 import { DatabaseManipulationServices } from "../../utils/database-manipulation-services";
-import { PrivateServices } from "../../utils/private-services";
 import { TableServices } from "../../utils/table-services";
-import { UndoLogUtilityServices } from "../../utils/undo-log-utility-services";
 
 export class TableServicesImpl implements TableServices {
   private prefix: string;
   private utils: DatabaseManipulationServices;
 
-  constructor(srv: UndoLogUtilityServices & PrivateServices) {
+  constructor(srv: UndoLogServices) {
     this.prefix = srv.prefix;
     this.utils = srv.databases.manipulation;
   }

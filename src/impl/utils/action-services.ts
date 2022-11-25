@@ -1,3 +1,4 @@
+import { UndoLogServices } from "../..";
 import { Connection } from "../../sqlite3";
 import {
   Action,
@@ -5,10 +6,8 @@ import {
   Channel
 } from "../../undo-log-tables";
 import { ActionServices } from "../../utils/action-services";
-import { PrivateServices } from "../../utils/private-services";
 import { SetupServices } from "../../utils/setup-services";
 import { OldOrNew, ColumnValue, NameValueType } from "../../utils/types";
-import { UndoLogUtilityServices } from "../../utils/undo-log-utility-services";
 
 
 export class ActionServicesImpl implements ActionServices {
@@ -16,7 +15,7 @@ export class ActionServicesImpl implements ActionServices {
   private prefix: string;
   private setup: SetupServices;
 
-  constructor(srv: UndoLogUtilityServices & PrivateServices) {
+  constructor(srv: UndoLogServices) {
     this.connection = srv.connection;
     this.prefix = srv.prefix;
     this.setup = srv.setup;

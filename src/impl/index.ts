@@ -10,7 +10,7 @@ export class UndoLogSetupPublicImpl implements UndoLogSetupPublic {
   private setup: UndoLogSetup;
   private apiLogFactory: (channelId: number) => UndoLogPublic;
   constructor(srv: UndoLogServices) {
-    this.definitions = srv.logUtils.databases.definition;
+    this.definitions = srv.databases.definition;
     this.apiLogFactory = srv.apiLogFactory;
     this.setup = srv.logSetup;
   }

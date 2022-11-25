@@ -7,7 +7,6 @@ import { UndoLogSetup } from "../undo-log-setup";
 import { AllTypeTable, setupBeforeEach } from "./fixtures";
 import { DatabaseDefinitionServices } from "../utils/database-definition-services";
 import { DatabaseManipulationServices } from "../utils/database-manipulation-services";
-import { UndoLogUtilityServices } from "../utils/undo-log-utility-services";
 
 describe("UndoLog", () => {
   let connection: Connection;
@@ -19,10 +18,8 @@ describe("UndoLog", () => {
   let logAssertions: UndoLogAssertions;
 
   beforeEach(async () => {
-    let logUtils: UndoLogUtilityServices;
-    ({ logSetup, logAssertions, assertions, log, connection, logUtils } = await setupBeforeEach());
-    const {databases} = logUtils;
-    ({definition: definitions, manipulation: manipulations} = databases);
+    let rest;
+    ({ logSetup, logAssertions, assertions, log, connection, databases: { definition: definitions, manipulation: manipulations} } = await setupBeforeEach());
     await logSetup.install();
     await logSetup.enableDebugMode(true);
   });

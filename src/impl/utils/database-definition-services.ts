@@ -1,14 +1,13 @@
+import { UndoLogServices } from "../..";
 import { ForeignKey, TableColumn, TableDefinition } from "../../undo-log-tables";
 import { DatabaseDefinitionServices } from "../../utils/database-definition-services";
-import { PrivateServices } from "../../utils/private-services";
 import { PragmaTableInfo } from "../../utils/types";
-import { UndoLogUtilityServices } from "../../utils/undo-log-utility-services";
 import { Connection } from "c:/Users/markh/Documents/GitHub/sqlite-undo-log/src/sqlite3";
 
 export class DatabaseDefinitionServicesImpl implements DatabaseDefinitionServices {
   private connection: Connection;
 
-  constructor(srv: UndoLogUtilityServices & PrivateServices) {
+  constructor(srv: UndoLogServices) {
     this.connection = srv.connection;
   }
 

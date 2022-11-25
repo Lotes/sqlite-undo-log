@@ -1,27 +1,42 @@
 import { Connection, ConnectionListener, WeakConnection } from "../sqlite3";
 import { tables, ChangeType, TableColumn, CleanUpTasks, CleanUpTask, CleanUpTaskType, ConfigNames, Logs, Changes, Configs, Channels, Actions, Tables, Values, Variables } from "../undo-log-tables";
 import { UndoLogSetup } from "../undo-log-setup";
-import { UndoLogUtilityServices } from "../utils/undo-log-utility-services";
 import { DatabaseDefinitionServices } from "../utils/database-definition-services";
 import { UndoLogServices } from "..";
+import { TeardownServices } from "../utils/teardown-services";
+import { ChannelServices } from "../utils/channel-services";
+import { SetupServices } from "../utils/setup-services";
+import { DatabaseManipulationServices } from "../utils/database-manipulation-services";
+import { ConfigurationServices } from "../utils/configuration-services";
+import { TableServices } from "../utils/table-services";
 
 const CLEANUP_TASK_NAME = CleanUpTasks.name;
 
 export class UndoLogSetupImpl implements UndoLogSetup {
   private connection: Connection;
-  private logUtils: UndoLogUtilityServices;
   private forceForeignKeys: boolean;
   private definitions: DatabaseDefinitionServices;
   private prefix: string;
   private logger: WeakConnection;
   private listener: ConnectionListener;
   private debug: boolean = false;
+  private config: ConfigurationServices;
+  private manipulations: DatabaseManipulationServices;
+  private tables: TableServices;
+  private setup: SetupServices;
+  private channels: ChannelServices;
+  private teardown: TeardownServices;
   constructor(srv: UndoLogServices) {
+    this.config = srv.config;
+    this.manipulations = srv.databases.manipulation;
+    this.setup = srv.setup;
+    this.teardown = srv.teardown;
+    this.channels = srv.channels;
     this.prefix = srv.prefix;
+    this.tables = srv.tables;
     this.forceForeignKeys = srv.forceForeignKeys
     this.connection = srv.connection;
-    this.logUtils = srv.logUtils;
-    this.definitions = srv.logUtils.databases.definition;
+    this.definitions = srv.databases.definition;
     this.logger = this.connection.clone();
     this.listener = async event => {
       await this.logger.run(`
@@ -39,7 +54,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     return "strftime('%Y-%m-%d %H-%M-%f','now')";
   }
   async enableDebugMode(enabled: boolean): Promise<void> {
-    await this.logUtils.config.setConfig(ConfigNames.DEBUG, enabled?1:0);
+    await this.config.setConfig(ConfigNames.DEBUG, enabled?1:0);
     await this.syncDebugMode();
   }
   async install(): Promise<string[]> {
@@ -48,8 +63,8 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     }
     if (!await this.isAlreadyInstalled()) {
       for (const table of tables) {
-        await this.logUtils.setup.createUndoLogTable(table.name, table);
-        await this.logUtils.tables.insertBlindlyIntoUndoLogTable<CleanUpTask, 'id'>(CLEANUP_TASK_NAME, {
+        await this.setup.createUndoLogTable(table.name, table);
+        await this.tables.insertBlindlyIntoUndoLogTable<CleanUpTask, 'id'>(CLEANUP_TASK_NAME, {
           type: CLEANUP_TASK_NAME === table.name ? "ROOT" : "TABLE",
           name: `${this.prefix}${table.name}`,
           ref_table_name: null,
@@ -60,7 +75,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     return tables.map(t => `${this.prefix}${t.name}`);
   }
   async syncDebugMode() {
-    this.debug = (await this.logUtils.config.getConfig(ConfigNames.DEBUG)) === 1;
+    this.debug = (await this.config.getConfig(ConfigNames.DEBUG)) === 1;
     if(this.debug) {
       this.connection.addConnectionListener(this.listener);
     } else {
@@ -75,8 +90,8 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     return alreadyInstalled;
   }
   private async cleanUp(type: CleanUpTaskType) {
-    const tasks = await this.logUtils.teardown.getCleanUpTasksByType('TRIGGER');
-    await this.logUtils.teardown.cleanUpAll(tasks);
+    const tasks = await this.teardown.getCleanUpTasksByType('TRIGGER');
+    await this.teardown.cleanUpAll(tasks);
   }
   async uninstall(): Promise<void> {
     await this.cleanUp('TRIGGER');
@@ -84,7 +99,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     await this.cleanUp('ROOT');
   }
   async addTable(name: string, channelId: number): Promise<void> {
-    await this.logUtils.channels.getOrCreateReadyChannel(channelId);
+    await this.channels.getOrCreateReadyChannel(channelId);
     const tableId = await this.createUndoLogTable(name, channelId);
     const columns = await this.createUndoLogColumns(tableId, name);
     await this.createTrigger("INSERT", name, columns);
@@ -235,7 +250,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     const variableName = triggerName + '_last_change_id_';
     const variableNameExpression = this.connection.escapeString(variableName)+" || "+(type === "DELETE" ? 'OLD' : 'NEW')+'.rowid';
     const getVariableQuery = this.scriptGetVariableQuery(variableNameExpression);
-    await this.logUtils.tables.insertBlindlyIntoUndoLogTable<CleanUpTask, 'id'>(CLEANUP_TASK_NAME, {
+    await this.tables.insertBlindlyIntoUndoLogTable<CleanUpTask, 'id'>(CLEANUP_TASK_NAME, {
       type: "TRIGGER",
       name: triggerName,
       ref_table_name: tableName,
@@ -275,8 +290,8 @@ export class UndoLogSetupImpl implements UndoLogSetup {
   }
 
   async removeTable(nameQuery: string): Promise<void> {
-    const tasks = await this.logUtils.teardown.getCleanUpTasksRelatedTo(nameQuery);
-    await this.logUtils.teardown.cleanUpAll(tasks);
+    const tasks = await this.teardown.getCleanUpTasksRelatedTo(nameQuery);
+    await this.teardown.cleanUpAll(tasks);
     await this.connection.run(`
       DELETE FROM ${this.prefix}tables
       WHERE name=${nameQuery}

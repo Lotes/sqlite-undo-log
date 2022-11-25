@@ -1,14 +1,13 @@
+import { UndoLogServices } from "../..";
 import { Connection } from "../../sqlite3";
 import { Configs } from "../../undo-log-tables";
 import { ConfigurationServices } from "../../utils/configuration-services";
-import { PrivateServices } from "../../utils/private-services";
-import { UndoLogUtilityServices } from "../../utils/undo-log-utility-services";
 
 
 export class ConfigurationServicesImpl implements ConfigurationServices {
   private connection: Connection;
   private prefix: string;
-  constructor(srv: UndoLogUtilityServices & PrivateServices) {
+  constructor(srv: UndoLogServices) {
     this.connection = srv.connection;
     this.prefix = srv.prefix;
   }

@@ -1,13 +1,12 @@
 import { unreachableCase } from "ts-assert-unreachable";
+import { UndoLogServices } from "../..";
 import { UndoLogError } from "../../undo-log";
 import { DatabaseUtilitiesServices } from "../../utils/database-utilities-services";
-import { PrivateServices } from "../../utils/private-services";
 import { ColumnValue } from "../../utils/types";
-import { UndoLogUtilityServices } from "../../utils/undo-log-utility-services";
 import { Parameters } from "c:/Users/markh/Documents/GitHub/sqlite-undo-log/src/sqlite3";
 
 export class DatabaseUtilitiesServicesImpl implements DatabaseUtilitiesServices {
-  constructor(_srv: UndoLogUtilityServices & PrivateServices) {}
+  constructor(_srv: UndoLogServices) {}
   
   normalize(arg: any): any {
     if (typeof arg === "string") {

@@ -1,13 +1,12 @@
+import { UndoLogServices } from "../..";
 import { Connection } from "../../sqlite3";
 import { DatabaseQueryServices } from "../../utils/database-query-services";
 import { DatabaseUtilitiesServices } from "../../utils/database-utilities-services";
-import { PrivateServices } from "../../utils/private-services";
-import { UndoLogUtilityServices } from "../../utils/undo-log-utility-services";
 
 export class DatabaseQueryServicesImpl implements DatabaseQueryServices {
   private connection: Connection;
   private utils: DatabaseUtilitiesServices;
-  constructor(srv: UndoLogUtilityServices & PrivateServices) {
+  constructor(srv: UndoLogServices) {
     this.connection = srv.connection;
     this.utils = srv.databases.utils;
   }
