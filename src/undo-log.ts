@@ -1,5 +1,5 @@
 import { ChangeType, Channel } from "./undo-log-tables";
-import { ColumnValue } from "./utilities";
+import { ColumnValue } from "./utils/types";
 
 export class UndoLogError extends Error {
   constructor(message: string) {

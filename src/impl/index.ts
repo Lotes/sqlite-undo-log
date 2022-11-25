@@ -1,14 +1,19 @@
-import { Connection } from "../sqlite3";
 import _ from "lodash";
 import { UndoLogImpl } from "./undo-log";
 import { Delta, UndoLog } from "../undo-log";
 import { UndoLogSetup } from "../undo-log-setup";
-import { UndoLogUtilityServices } from "../utils/undo-log-utility-services";
-import { Utils } from "../utilities";
-import { UndoLogSetupPublic, UndoLogPublic, InitializeMultipleOptions, InitializeMultipleResult, UndoLogConstructorOptions } from "..";
+import { UndoLogSetupPublic, UndoLogPublic, InitializeMultipleOptions, InitializeMultipleResult, UndoLogServices } from "..";
+import { DatabaseDefinitionServices } from "../utils/database-definition-services";
 
 export class UndoLogSetupPublicImpl implements UndoLogSetupPublic {
-  constructor(private utils: Utils, private setup: UndoLogSetup, private apiLogFactory: (channelId: number) => UndoLogPublic) {}
+  private definitions: DatabaseDefinitionServices;
+  private setup: UndoLogSetup;
+  private apiLogFactory: (channelId: number) => UndoLogPublic;
+  constructor(srv: UndoLogServices) {
+    this.definitions = srv.logUtils.databases.definition;
+    this.apiLogFactory = srv.apiLogFactory;
+    this.setup = srv.logSetup;
+  }
   async initializeMultiple(
     options: InitializeMultipleOptions
   ): Promise<InitializeMultipleResult> {
@@ -29,7 +34,7 @@ export class UndoLogSetupPublicImpl implements UndoLogSetupPublic {
     const channelId = channel ?? 0;
     const logTableNames = await this.setup.install();
     const tables = _.difference(
-      await this.utils.getAllTableNames(),
+      await this.definitions.getAllTableNames(),
       logTableNames
     );
     await Promise.all(tables.map((n) => this.setup.addTable(n, channelId)));
@@ -41,13 +46,11 @@ export class UndoLogPublicImpl implements UndoLogPublic {
   private channelId: number;
   private undoLog: UndoLog;
   constructor(
-    connection: Connection,
-    logUtils: UndoLogUtilityServices,
-    utils: Utils,
-    { channelId, tablePrefix }: UndoLogConstructorOptions
+    srv: UndoLogServices,
+    channelId: number
   ) {
     this.channelId = channelId;
-    this.undoLog = new UndoLogImpl(connection, logUtils, tablePrefix);
+    this.undoLog = new UndoLogImpl(srv);
   }
   private startTracking(category?: string): Promise<void> {
     return this.undoLog.startTracking(this.channelId, category);

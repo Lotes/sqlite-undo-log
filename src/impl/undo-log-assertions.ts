@@ -1,11 +1,19 @@
 import { Action, Change, Channel, ChannelStatus } from "../undo-log-tables";
 import { UndoLogAssertions } from "../undo-log-assertions";
-import { OldOrNew, Utils } from "../utilities";
 import { UndoLogUtilityServices } from "../utils/undo-log-utility-services";
 import { Assertions } from "../assertions";
+import { OldOrNew } from "../utils/types";
+import { DatabaseUtilitiesServices } from "../utils/database-utilities-services";
+import { UndoLogTestServices } from "..";
 
 export class UndoLogAssertionsImpl implements UndoLogAssertions {
-  constructor(private undoLogUtils: UndoLogUtilityServices, private utils: Utils, private assertions: Assertions) {
+  private undoLogUtils: UndoLogUtilityServices;
+  private utils: DatabaseUtilitiesServices;
+  private assertions: Assertions;
+  constructor(srv: UndoLogTestServices) {
+    this.undoLogUtils = srv.logUtils;
+    this.utils = srv.logUtils.databases.utils;
+    this.assertions = srv.assertions;
   }
 
   async assertChannelInStatus(channelId: number, status: ChannelStatus): Promise<Channel> {

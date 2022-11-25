@@ -1,11 +1,13 @@
-import { Utils } from "../utilities";
 import { ActionServices } from "./action-services";
 import { ChannelServices } from "./channel-services";
 import { TableServices } from "./table-services";
 import { ConfigurationServices } from "./configuration-services";
 import { TeardownServices } from "./teardown-services";
 import { SetupServices } from "./setup-services";
-
+import { DatabaseUtilitiesServices } from "./database-utilities-services";
+import { DatabaseQueryServices } from "./database-query-services";
+import { DatabaseManipulationServices } from "./database-manipulation-services";
+import { DatabaseDefinitionServices } from "./database-definition-services";
 
 export interface UndoLogUtilityServices {
   setup: SetupServices;
@@ -14,5 +16,10 @@ export interface UndoLogUtilityServices {
   tables: TableServices;
   channels: ChannelServices;
   actions: ActionServices;
-  utils: Utils;
+  databases: {
+    definition: DatabaseDefinitionServices;
+    manipulation: DatabaseManipulationServices;
+    query: DatabaseQueryServices;
+    utils: DatabaseUtilitiesServices;
+  };
 }

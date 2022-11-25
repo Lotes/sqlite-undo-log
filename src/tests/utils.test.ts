@@ -1,16 +1,25 @@
 import { Assertions } from "../assertions";
 import { Connection } from "../sqlite3";
 import { SqliteType } from "../undo-log-tables";
-import { Utils } from "../utilities";
+import { DatabaseDefinitionServices } from "../utils/database-definition-services";
+import { DatabaseManipulationServices } from "../utils/database-manipulation-services";
+import { DatabaseQueryServices } from "../utils/database-query-services";
+import { DatabaseUtilitiesServices } from "../utils/database-utilities-services";
+import { UndoLogUtilityServices } from "../utils/undo-log-utility-services";
 import { setupBeforeEach, TableDefintion_OnlyOneType } from "./fixtures";
 
 describe("utils", () => {
   let connection: Connection;
-  let utils: Utils;
   let assertions: Assertions;
+  let manipulations: DatabaseManipulationServices;
+  let definitions: DatabaseDefinitionServices;
+  let queries: DatabaseQueryServices;
+  let utils: DatabaseUtilitiesServices;
 
   beforeEach(async () => {
-    ({ assertions, connection, logUtils: {utils} } = await setupBeforeEach());
+    let logUtils: UndoLogUtilityServices;
+    ({ assertions, connection, logUtils } = await setupBeforeEach());
+    ({utils, query: queries, manipulation: manipulations, definition: definitions}  = logUtils.databases);
   });
 
   afterEach(async () => {
@@ -25,7 +34,7 @@ describe("utils", () => {
         const def = TableDefintion_OnlyOneType(type);
 
         // act
-        await utils.createTable(def.name, def);
+        await definitions.createTable(def.name, def);
 
         // assert
         await assertions.assertTableExists(def.name);
@@ -42,10 +51,10 @@ describe("utils", () => {
     ])("table with a %s column only", async (type: SqliteType, value: any) => {
       // arrange
       const def = TableDefintion_OnlyOneType(type);
-      await utils.createTable(def.name, def);
+      await definitions.createTable(def.name, def);
 
       // act
-      await utils.insertIntoTable(def.name, { id: 123, col: value });
+      await manipulations.insertIntoTable(def.name, { id: 123, col: value });
 
       // assert
       await assertions.assertTableHas(def.name, { id: 123, col: value });
@@ -63,11 +72,11 @@ describe("utils", () => {
       async (type: SqliteType, initialValue: any, expected: any) => {
         // arrange
         const def = TableDefintion_OnlyOneType(type);
-        await utils.createTable(def.name, def);
-        await utils.insertIntoTable(def.name, { id: 123, col: initialValue });
+        await definitions.createTable(def.name, def);
+        await manipulations.insertIntoTable(def.name, { id: 123, col: initialValue });
 
         // act
-        await utils.updateTable(def.name, 123, { col: expected });
+        await manipulations.updateTable(def.name, 123, { col: expected });
 
         // assert
         await assertions.assertTableHas(def.name, { id: 123, col: expected });
@@ -80,11 +89,11 @@ describe("utils", () => {
       async (type: SqliteType) => {
         // arrange
         const def = TableDefintion_OnlyOneType(type);
-        await utils.createTable(def.name, def);
+        await definitions.createTable(def.name, def);
 
         // act
-        const result1 = await utils.doesColumnExist(def.name, "col");
-        const result2 = await utils.doesColumnExist(
+        const result1 = await definitions.doesColumnExist(def.name, "col");
+        const result2 = await definitions.doesColumnExist(
           def.name,
           "col_not_existent"
         );
@@ -101,10 +110,10 @@ describe("utils", () => {
       async (type: SqliteType) => {
         // arrange
         const def = TableDefintion_OnlyOneType(type);
-        await utils.createTable(def.name, def);
+        await definitions.createTable(def.name, def);
 
         // act
-        const [id, col] = await utils.getMetaTable(def.name);
+        const [id, col] = await definitions.getMetaTable(def.name);
 
         // assert
         expect(id.name).toBe("id");
@@ -119,7 +128,7 @@ describe("utils", () => {
   describe("doesTableExist", () => {
     test("table is a lie", async () => {
       // arrange + act
-      const actual = await utils.doesTableExist("nope");
+      const actual = await definitions.doesTableExist("nope");
 
       // assert
       expect(actual).toBeFalsy();
@@ -127,10 +136,10 @@ describe("utils", () => {
 
     test("table is there", async () => {
       // arrange
-      await utils.createTable("yes", TableDefintion_OnlyOneType("TEXT"));
+      await definitions.createTable("yes", TableDefintion_OnlyOneType("TEXT"));
 
       // act
-      const actual = await utils.doesTableExist("yes");
+      const actual = await definitions.doesTableExist("yes");
 
       // assert
       expect(actual).toBeTruthy();
@@ -146,12 +155,12 @@ describe("utils", () => {
     ])("table with a %s column only", async (type: SqliteType, value: any) => {
       // arrange
       const def = TableDefintion_OnlyOneType(type);
-      await utils.createTable(def.name, def);
-      await utils.insertIntoTable(def.name, { id: 123, col: value });
+      await definitions.createTable(def.name, def);
+      await manipulations.insertIntoTable(def.name, { id: 123, col: value });
 
       // act + assert
-      expect(await utils.hasTableId(def.name, 123)).toBeTruthy();
-      expect(await utils.hasTableId(def.name, 456)).toBeFalsy();
+      expect(await queries.hasTableId(def.name, 123)).toBeTruthy();
+      expect(await queries.hasTableId(def.name, 456)).toBeFalsy();
     });
   });
   describe("tableHas", () => {
@@ -164,14 +173,14 @@ describe("utils", () => {
     ])("table with a %s column only", async (type: SqliteType, expected: any) => {
       // arrange
       const def = TableDefintion_OnlyOneType(type);
-      await utils.createTable(def.name, def);
-      await utils.insertIntoTable(def.name, { id: 123, col: expected });
+      await definitions.createTable(def.name, def);
+      await manipulations.insertIntoTable(def.name, { id: 123, col: expected });
 
       // act + assert
-      const initial = await utils.tableHas(def.name, {id: 123, col: expected});
+      const initial = await queries.tableHas(def.name, {id: 123, col: expected});
       expect(initial[0]).toBeTruthy();
       expect(initial[1].length).toBe(0);
-      const actual = await utils.tableHas(def.name, {id: 124, col: expected});
+      const actual = await queries.tableHas(def.name, {id: 124, col: expected});
       expect(actual[0]).toBeFalsy();
       expect(actual[1].length).toBe(1);
     });
@@ -186,14 +195,14 @@ describe("utils", () => {
     ])("table with a %s column only", async (type: SqliteType, value: any) => {
       // arrange
       const def = TableDefintion_OnlyOneType(type);
-      await utils.createTable(def.name, def);
-      await utils.insertIntoTable(def.name, { id: 123, col: value });
+      await definitions.createTable(def.name, def);
+      await manipulations.insertIntoTable(def.name, { id: 123, col: value });
 
       // assume
       await assertions.assertTableHasId(def.name, 123);
 
       // act
-      await utils.deleteFromTable(def.name, 123);
+      await manipulations.deleteFromTable(def.name, 123);
 
       // assert
       await assertions.assertTableHasNoId(def.name, 123);

@@ -2,22 +2,22 @@ import { Action, Category, Change, Channel, Table } from "../undo-log-tables";
 import { Connection } from "../sqlite3";
 import { Delta, UndoLog, UndoLogError, UndoLogStatus } from "../undo-log";
 import { UndoLogUtilityServices } from "../utils/undo-log-utility-services";
-import { Utils } from "../utilities";
+import { DatabaseUtilitiesServices } from "../utils/database-utilities-services";
+import { DatabaseManipulationServices } from "../utils/database-manipulation-services";
+import { UndoLogServices } from "..";
 
 export class UndoLogImpl implements UndoLog {
   private connection: Connection;
-  private prefix: string;
   private logUtils: UndoLogUtilityServices;
-  private utils: Utils;
-  constructor(
-    connection: Connection,
-    utils: UndoLogUtilityServices,
-    prefix: string = "undo_"
-  ) {
-    this.connection = connection;
-    this.prefix = prefix;
-    this.logUtils = utils;
-    this.utils = this.logUtils.utils;
+  private utils: DatabaseUtilitiesServices;
+  private manipulations: DatabaseManipulationServices;
+  private prefix: string;
+  constructor(srv: UndoLogServices) {
+    this.connection = srv.connection;
+    this.logUtils = srv.logUtils;
+    this.utils = srv.logUtils.databases.utils;
+    this.manipulations = srv.logUtils.databases.manipulation;
+    this.prefix = srv.prefix;
   }
   async startTracking(
     channelId: number,
@@ -230,7 +230,7 @@ export class UndoLogImpl implements UndoLog {
   private async undoDeletion(table: Table, change: Change): Promise<Delta> {
     const values = await this.logUtils.actions.getValuesOfChange(change, "old");
     const unquotedValues = this.utils.unquote(values);
-    await this.utils.insertIntoTable(table.name, unquotedValues);
+    await this.manipulations.insertIntoTable(table.name, unquotedValues);
     return {
       ...values,
       $type: "INSERT",
@@ -241,7 +241,7 @@ export class UndoLogImpl implements UndoLog {
   private async undoUpdate(table: Table, change: Change): Promise<Delta> {
     const values = await this.logUtils.actions.getValuesOfChange(change, "old");
     const unquotedValues = this.utils.unquote(values);
-    await this.utils.updateTable(table.name, change.new_row_id, unquotedValues);
+    await this.manipulations.updateTable(table.name, change.new_row_id, unquotedValues);
     return {
       ...values,
       $type: "UPDATE",
@@ -253,7 +253,7 @@ export class UndoLogImpl implements UndoLog {
   private async redoInsertion(table: Table, change: Change): Promise<Delta> {
     const values = await this.logUtils.actions.getValuesOfChange(change, "new");
     const unquotedValues = this.utils.unquote(values);
-    await this.utils.insertIntoTable(table.name, unquotedValues);
+    await this.manipulations.insertIntoTable(table.name, unquotedValues);
     return {
       ...values,
       $type: "INSERT",
@@ -280,7 +280,7 @@ export class UndoLogImpl implements UndoLog {
   private async redoUpdate(table: Table, change: Change): Promise<Delta> {
     const values = await this.logUtils.actions.getValuesOfChange(change, "new");
     const unquotedValues = this.utils.unquote(values);
-    await this.utils.updateTable(table.name, change.old_row_id, unquotedValues);
+    await this.manipulations.updateTable(table.name, change.old_row_id, unquotedValues);
     return {
       ...values,
       $type: "UPDATE",

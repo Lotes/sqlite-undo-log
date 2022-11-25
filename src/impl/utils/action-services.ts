@@ -4,10 +4,10 @@ import {
   Change,
   Channel
 } from "../../undo-log-tables";
-import { OldOrNew, ColumnValue, NameValueType } from "../../utilities";
 import { ActionServices } from "../../utils/action-services";
 import { PrivateServices } from "../../utils/private-services";
 import { SetupServices } from "../../utils/setup-services";
+import { OldOrNew, ColumnValue, NameValueType } from "../../utils/types";
 import { UndoLogUtilityServices } from "../../utils/undo-log-utility-services";
 
 

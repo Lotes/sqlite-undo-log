@@ -1,25 +1,31 @@
 import { Connection, ConnectionListener, WeakConnection } from "../sqlite3";
 import { tables, ChangeType, TableColumn, CleanUpTasks, CleanUpTask, CleanUpTaskType, ConfigNames, Logs, Changes, Configs, Channels, Actions, Tables, Values, Variables } from "../undo-log-tables";
 import { UndoLogSetup } from "../undo-log-setup";
-import { Utils } from "../utilities";
 import { UndoLogUtilityServices } from "../utils/undo-log-utility-services";
+import { DatabaseDefinitionServices } from "../utils/database-definition-services";
+import { UndoLogServices } from "..";
 
 const CLEANUP_TASK_NAME = CleanUpTasks.name;
+
 export class UndoLogSetupImpl implements UndoLogSetup {
+  private connection: Connection;
+  private logUtils: UndoLogUtilityServices;
+  private forceForeignKeys: boolean;
+  private definitions: DatabaseDefinitionServices;
+  private prefix: string;
   private logger: WeakConnection;
   private listener: ConnectionListener;
   private debug: boolean = false;
-  constructor(
-    private connection: Connection,
-    private logUtils: UndoLogUtilityServices,
-    private forceForeignKeys: boolean = true,
-    private utils: Utils,
-    private prefix: string = "undo_"
-  ) {
-    this.logger = connection.clone();
+  constructor(srv: UndoLogServices) {
+    this.prefix = srv.prefix;
+    this.forceForeignKeys = srv.forceForeignKeys
+    this.connection = srv.connection;
+    this.logUtils = srv.logUtils;
+    this.definitions = srv.logUtils.databases.definition;
+    this.logger = this.connection.clone();
     this.listener = async event => {
       await this.logger.run(`
-        INSERT INTO ${prefix}${Logs.name} (timestamp, query, parameters, location)
+        INSERT INTO ${this.prefix}${Logs.name} (timestamp, query, parameters, location)
         VALUES (${this.scriptTimestamp()}, $query, $parameters, $location)`,
         {
           $query: event.query,
@@ -64,7 +70,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
   private async isAlreadyInstalled(): Promise<boolean> {
     let alreadyInstalled = true;
     for (const table of tables) {
-      alreadyInstalled &&= await this.utils.doesTableExist(table.name);
+      alreadyInstalled &&= await this.definitions.doesTableExist(table.name);
     }
     return alreadyInstalled;
   }
@@ -86,7 +92,7 @@ export class UndoLogSetupImpl implements UndoLogSetup {
     await this.createTrigger("DELETE", name, columns);
   }
   private async createUndoLogColumns(tableId: number, tableName: string) {
-    const columns = await this.utils.getMetaTable(tableName);
+    const columns = await this.definitions.getMetaTable(tableName);
     const keyTable = "$table";
     let parameters: Record<string, string | number> = { [keyTable]: tableId };
     let dataStrings: string[] = [];

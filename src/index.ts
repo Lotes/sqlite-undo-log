@@ -13,53 +13,58 @@ import { UndoLogAssertionsImpl } from "./impl/undo-log-assertions";
 import { UndoLogSetupImpl } from "./impl/undo-log-setup";
 
 export interface UndoLogConnectionServices {
-    prefix: string|undefined;
+    prefix: string;
     connection: Connection;
     logUtils: UndoLogUtilityServices;
 }
 
-export interface UndoLogServices {
+export interface UndoLogServices extends UndoLogConnectionServices {
+    forceForeignKeys: boolean;
     logFactory: () => UndoLog;
     logSetup: UndoLogSetup;
     api: UndoLogSetupPublic;
     apiLogFactory: (channelId: number) => UndoLogPublic;
 }
 
-export interface UndoLogTestServices {
+export interface UndoLogTestServices extends UndoLogServices {
     assertions: Assertions;
     logAssertions: UndoLogAssertions;
     log: UndoLog;
     apiLog: UndoLogPublic;
 }
 
-function module(connection: Connection, prefix?: string): Module<UndoLogServices & UndoLogConnectionServices, UndoLogServices & UndoLogConnectionServices> {
-    return {
+type UndoLogSVC = UndoLogServices;
+
+function module(connection: Connection, prefix: string): Module<UndoLogServices, UndoLogServices> {
+    const module: Module<UndoLogServices, UndoLogServices> = {
+        forceForeignKeys:  () => true,
         prefix: () => prefix,
         connection: () => connection,
         logUtils: srv => createUndoLogUtilityServices(srv.connection, srv.prefix),
-        logFactory:  srv => () => new UndoLogImpl(srv.connection, srv.logUtils, srv.prefix),
-        logSetup: srv => new UndoLogSetupImpl(srv.connection, srv.logUtils, true, srv.logUtils.utils, srv.prefix),
-        api: srv => new UndoLogSetupPublicImpl(srv.logUtils.utils, srv.logSetup, srv.apiLogFactory),
-        apiLogFactory: srv => (channelId: number) => new UndoLogPublicImpl(srv.connection, srv.logUtils, srv.utils, {channelId, tablePrefix: srv.prefix})
+        logFactory: srv => () => new UndoLogImpl(srv),
+        logSetup: srv => new UndoLogSetupImpl(srv),
+        api: srv => new UndoLogSetupPublicImpl(srv),
+        apiLogFactory: srv => (channelId: number) => new UndoLogPublicImpl(srv, channelId)
     };
+    return module;
 }
 
-export function createUndoLogServices(connection: Connection, prefix?: string) {
+export function createUndoLogServices(connection: Connection, prefix: string) {
     return inject(module(connection, prefix)) as UndoLogServices & UndoLogConnectionServices;
 }
 
-function testModule(connection: Connection, prefix: string): Module<UndoLogTestServices & UndoLogConnectionServices & UndoLogServices> {
+function testModule(connection: Connection, prefix: string): Module<UndoLogTestServices> {
     return {
         ...module(connection, prefix),
-        assertions: srv => new AssertionsImpl(srv.logUtils.utils),
-        logAssertions: srv => new UndoLogAssertionsImpl(srv.logUtils, srv.logUtils.utils, srv.assertions),
+        assertions: srv => new AssertionsImpl(srv),
+        logAssertions: srv => new UndoLogAssertionsImpl(srv),
         log: srv => srv.logFactory(),
         apiLog: srv => srv.apiLogFactory(0)
     };
 }
 
 export function createTestServices(connection: Connection, prefix: string) {
-    return inject(testModule(connection, prefix)) as UndoLogTestServices & UndoLogConnectionServices & UndoLogServices;
+    return inject(testModule(connection, prefix)) as UndoLogTestServices;
 }
 
 export type InitializeMultipleOptions = Record<number, string | string[]>;

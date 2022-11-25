@@ -3,8 +3,7 @@ import {
   Change,
   Channel
 } from "../undo-log-tables";
-import { ColumnValue, OldOrNew } from "../utilities";
-
+import { OldOrNew, ColumnValue } from "./types";
 
 export interface ActionServices {
   markActionAsUndone(actionId: number, undone: boolean): Promise<void>;
